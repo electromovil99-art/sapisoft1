@@ -175,6 +175,10 @@ const App: React.FC = () => {
       if(data.sales) setSalesHistory(data.sales);
       if(data.movements) setCashMovements(data.movements);
       if(data.services) setServices(data.services);
+      if(data.suppliers) setSuppliers(data.suppliers);
+      if(data.brands) setBrands(data.brands);
+      if(data.categories) setCategories(data.categories);
+      if(data.bankAccounts) setBankAccounts(data.bankAccounts);
       alert("Datos sincronizados desde la nube correctamente.");
   };
 
@@ -267,7 +271,7 @@ const App: React.FC = () => {
                 {currentView === ViewState.CLIENT_WALLET && <ClientWalletModule clients={clients} locations={locations} onUpdateClientBalance={handleUpdateClientBalance} onAddClient={handleAddClient}/>}
                 {currentView === ViewState.LOCATIONS && <LocationsModule locations={locations} onAddLocation={(l) => setLocations([...locations, l])} onDeleteLocation={(id) => setLocations(locations.filter(l => l.id !== id))} />}
                 {currentView === ViewState.WHATSAPP && <WhatsAppModule products={products} clients={clients} chats={chats} setChats={setChats} initialContact={waInitialContact}/>}
-                {currentView === ViewState.DATABASE_CONFIG && <DatabaseModule data={{products, clients, movements: cashMovements, sales: salesHistory, services}} onSyncDownload={handleSyncDownload}/>}
+                {currentView === ViewState.DATABASE_CONFIG && <DatabaseModule data={{products, clients, movements: cashMovements, sales: salesHistory, services, suppliers, brands, categories, bankAccounts}} onSyncDownload={handleSyncDownload}/>}
             </>
         )}
     </Layout>

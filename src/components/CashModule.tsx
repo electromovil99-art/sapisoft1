@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { Plus, Minus, Wallet, Banknote, QrCode, Landmark, LayoutGrid, FileText, Filter, Eye, ArrowRight, ArrowDownRight, ArrowUpRight } from 'lucide-react';
+import { Plus, Minus, Wallet, Banknote, QrCode, Landmark, CreditCard, LayoutGrid, Eye, FileText, Filter, ArrowRight, ArrowDownRight, ArrowUpRight } from 'lucide-react';
 import { CashMovement, PaymentMethodType } from '../types';
 
 interface CashModuleProps {
@@ -14,28 +13,7 @@ const CashModule: React.FC<CashModuleProps> = ({ movements, onAddMovement }) => 
   const [amount, setAmount] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethodType>('Efectivo');
   const [filterMethod, setFilterMethod] = useState<'TODOS' | PaymentMethodType | 'DIGITAL'>('TODOS');
-  
-  // Logic for Modal
-  const handleSave = () => {
-      if (!amount || !concept) return;
-      const val = parseFloat(amount);
-      if(isNaN(val) || val <= 0) return;
-
-      onAddMovement({
-          id: Math.random().toString(),
-          time: new Date().toLocaleTimeString(),
-          type: modalType!,
-          paymentMethod,
-          concept: concept.toUpperCase(),
-          amount: val,
-          user: 'ADMIN', // Should come from session in real app
-          category: 'Manual',
-          financialType: 'Variable'
-      });
-      setModalType(null);
-      setConcept('');
-      setAmount('');
-  };
+  const [viewDocument, setViewDocument] = useState<CashMovement | null>(null);
 
   const filteredMovements = movements.filter(m => {
       if (filterMethod === 'TODOS') return true;
@@ -60,11 +38,32 @@ const CashModule: React.FC<CashModuleProps> = ({ movements, onAddMovement }) => 
           case 'Efectivo': return <Banknote size={14} className="text-emerald-600 dark:text-emerald-400"/>;
           case 'Yape': return <QrCode size={14} className="text-purple-600 dark:text-purple-400"/>;
           case 'Plin': return <QrCode size={14} className="text-sky-500 dark:text-sky-400"/>;
-          case 'Tarjeta': return <CreditCardIcon size={14} className="text-blue-600 dark:text-blue-400"/>;
+          case 'Tarjeta': return <CreditCard size={14} className="text-blue-600 dark:text-blue-400"/>;
           case 'Deposito': return <Landmark size={14} className="text-slate-600 dark:text-slate-400"/>;
           default: return <Banknote size={14}/>;
       }
   };
+
+  const handleSave = () => {
+    if (!amount || !concept) return;
+    const val = parseFloat(amount);
+    if(isNaN(val) || val <= 0) return;
+
+    onAddMovement({
+        id: Math.random().toString(),
+        time: new Date().toLocaleTimeString(),
+        type: modalType!,
+        paymentMethod,
+        concept: concept.toUpperCase(),
+        amount: val,
+        user: 'ADMIN', // Should come from session in real app
+        category: 'Manual',
+        financialType: 'Variable'
+    });
+    setModalType(null);
+    setConcept('');
+    setAmount('');
+};
 
   return (
     <div className="flex flex-col gap-6 h-full">
@@ -130,4 +129,5 @@ const CreditCardIcon = ({ size, className }: { size: number, className?: string 
     <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
 );
 
+// FIX: Add default export to the component.
 export default CashModule;
