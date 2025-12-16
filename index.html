@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SapiSoft Cloud ERP</title>
+    
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=Spline+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+                "primary": "#9333ea", 
+                "primary-dark": "#7e22ce",
+                "primary-light": "#f3e8ff",
+                "primary-50": "#faf5ff",
+                "primary-100": "#f3e8ff",
+                "primary-600": "#9333ea",
+                "background-light": "#f8fafc",
+                "background-dark": "#0f0f0f",
+                "text-dark": "#1e293b",
+            },
+            fontFamily: {
+                "display": ["Spline Sans", "sans-serif"],
+                "sans": ["Spline Sans", "Inter", "sans-serif"]
+            }
+          }
+        }
+      }
+    </script>
+    
+    <style>
+      html, body, #root { height: 100%; font-family: 'Spline Sans', sans-serif; }
+      .glass-panel { background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.5); }
+      .dark .glass-panel { background: rgba(20, 20, 20, 0.7); border: 1px solid rgba(255, 255, 255, 0.1); }
+      /* Scrollbar */
+      ::-webkit-scrollbar { width: 8px; height: 8px; }
+      ::-webkit-scrollbar-thumb { background: #d8b4fe; border-radius: 4px; }
+      .dark ::-webkit-scrollbar-thumb { background: #334155; }
+      /* Tables */
+      .modern-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+      .modern-table th { padding: 14px 16px; text-align: left; position: sticky; top: 0; z-index: 10; background-color: #f8fafc; border-bottom: 2px solid #cbd5e1; color: #475569; }
+      .modern-table td { padding: 12px 16px; border-bottom: 1px solid #e2e8f0; color: #1e293b; }
+      .dark .modern-table th { background-color: rgba(15, 23, 42, 0.95); border-bottom: 1px solid #334155; color: #94a3b8; }
+      .dark .modern-table td { border-color: #1e293b; color: #e2e8f0; }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "lucide-react": "https://esm.sh/lucide-react@^0.561.0"
+  }
+}
+</script>
+</head>
+  <body class="bg-background-light dark:bg-background-dark text-text-dark dark:text-gray-100 font-display transition-colors duration-300 overflow-x-hidden">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
