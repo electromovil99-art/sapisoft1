@@ -22,6 +22,7 @@ export enum ViewState {
   CLIENT_WALLET = 'CLIENT_WALLET',
   LOCATIONS = 'LOCATIONS',
   WHATSAPP = 'WHATSAPP', 
+  QUOTATIONS = 'QUOTATIONS',
   DATABASE_CONFIG = 'DATABASE_CONFIG', // New View
   SUPER_ADMIN_DASHBOARD = 'SUPER_ADMIN_DASHBOARD'
 }
@@ -226,6 +227,15 @@ export interface GeoLocation {
     name: string;
     type: 'DEP' | 'PROV' | 'DIST';
     parentId?: string;
+}
+
+export interface Quotation {
+    id: string;
+    date: string;
+    time: string;
+    clientName: string;
+    items: CartItem[];
+    total: number;
 }
 
 // --- WHATSAPP & CHAT TYPES ---

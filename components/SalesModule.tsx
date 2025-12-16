@@ -1,6 +1,7 @@
+
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, Trash2, CreditCard, Banknote, UserPlus, FileText, Printer, Plus, Minus, X, Check, ShoppingCart, User, Smartphone, Receipt, QrCode, Landmark, CheckCircle, Edit3, Lock, ShieldAlert, MapPin, Filter, History, AlertTriangle, ArrowRight, Wallet, RotateCcw } from 'lucide-react';
-import { Product, CartItem, Client, PaymentBreakdown, Category, PurchaseRecord, BankAccount, PaymentMethodType, GeoLocation } from '../types';
+import { Search, Trash2, CreditCard, Banknote, UserPlus, FileText, Printer, Plus, Minus, X, Check, ShoppingCart, User, Smartphone, Receipt, QrCode, Landmark, CheckCircle, Edit3, Lock, ShieldAlert, MapPin, Filter, History, AlertTriangle, ArrowRight, Wallet, RotateCcw, ClipboardList, Upload } from 'lucide-react';
+import { Product, CartItem, Client, PaymentBreakdown, Category, PurchaseRecord, BankAccount, PaymentMethodType, GeoLocation, Quotation } from '../types';
 
 interface SalesModuleProps {
     products: Product[];
@@ -8,9 +9,19 @@ interface SalesModuleProps {
     categories: Category[]; 
     purchasesHistory: PurchaseRecord[];
     bankAccounts: BankAccount[]; 
-    locations: GeoLocation[]; // New prop
+    locations: GeoLocation[];
     onAddClient: (client: Client) => void;
     onProcessSale: (cart: CartItem[], total: number, docType: string, clientName: string, paymentBreakdown: PaymentBreakdown, ticketId: string) => void;
+    
+    // Lifted State
+    cart: CartItem[];
+    setCart: (cart: CartItem[]) => void;
+    client: Client | null;
+    setClient: (client: Client | null) => void;
+
+    // Quotation props
+    quotations: Quotation[];
+    onLoadQuotation: (quotation: Quotation) => void;
 }
 
 // Internal interface for the payment list
@@ -23,19 +34,18 @@ interface PaymentDetail {
     bankName?: string; 
 }
 
-const SalesModule: React.FC<SalesModuleProps> = ({ products, clients, categories, purchasesHistory, bankAccounts, locations, onAddClient, onProcessSale }) => {
+const SalesModule: React.FC<SalesModuleProps> = ({ products, clients, categories, purchasesHistory, bankAccounts, locations, onAddClient, onProcessSale, cart, setCart, client, setClient, quotations, onLoadQuotation }) => {
   // Estado Principal
-  const [cart, setCart] = useState<CartItem[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState(''); 
 
   // Datos de Venta
-  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [clientSearchTerm, setClientSearchTerm] = useState(''); 
   const [docType, setDocType] = useState('TICKET DE VENTA');
   
   // Modales
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showRecoverModal, setShowRecoverModal] = useState(false);
   
   // --- PAYMENT LOGIC ---
   const [paymentList, setPaymentList] = useState<PaymentDetail[]>([]);
@@ -74,23 +84,21 @@ const SalesModule: React.FC<SalesModuleProps> = ({ products, clients, categories
 
   const searchInputRef = useRef<HTMLInputElement>(null);
   const paymentAmountRef = useRef<HTMLInputElement>(null);
-
-  // Initialize Default Client
+  
+  // Sync local search term with client from parent state
   useEffect(() => {
-      if (clients.length > 0 && !selectedClient) {
-          const defaultClient = clients[0];
-          setSelectedClient(defaultClient);
-          setClientSearchTerm(defaultClient.name); // Sync search input
-      }
-  }, [clients]);
+    if (client) {
+        setClientSearchTerm(client.name);
+    }
+  }, [client]);
 
   // Handle Client Search Selection
   const handleClientSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const val = e.target.value;
       setClientSearchTerm(val);
-      const found = clients.find(c => c.name === val.toUpperCase());
+      const found = clients.find(c => c.name.toUpperCase() === val.toUpperCase());
       if (found) {
-          setSelectedClient(found);
+          setClient(found);
       }
   };
 
@@ -234,7 +242,7 @@ const SalesModule: React.FC<SalesModuleProps> = ({ products, clients, categories
 
       // Check Wallet Balance Logic
       if (currentPayment.method === 'Saldo Favor') {
-          const walletBalance = selectedClient?.digitalBalance || 0;
+          const walletBalance = client?.digitalBalance || 0;
           const alreadyUsedWallet = paymentList.filter(p => p.method === 'Saldo Favor').reduce((acc,p) => acc + p.amount, 0);
           if (amountVal > (walletBalance - alreadyUsedWallet)) {
               alert(`Saldo insuficiente. El cliente solo tiene S/ ${(walletBalance - alreadyUsedWallet).toFixed(2)} disponibles.`);
@@ -298,7 +306,7 @@ const SalesModule: React.FC<SalesModuleProps> = ({ products, clients, categories
           digitalBalance: 0 // Init
       };
       onAddClient(newClient);
-      setSelectedClient(newClient);
+      setClient(newClient);
       setClientSearchTerm(newClient.name); // Update search input
       setShowClientModal(false);
   };
@@ -320,13 +328,13 @@ const SalesModule: React.FC<SalesModuleProps> = ({ products, clients, categories
 
       const ticketId = Math.floor(Math.random() * 100000).toString();
 
-      onProcessSale(cart, total, docType, selectedClient?.name || 'Cliente Varios', breakdown, ticketId);
+      onProcessSale(cart, total, docType, client?.name || 'Cliente Varios', breakdown, ticketId);
 
       setTicketData({
           orderId: ticketId,
           date: new Date().toLocaleDateString('es-PE'),
           time: new Date().toLocaleTimeString('es-PE', {hour: '2-digit', minute:'2-digit'}),
-          client: selectedClient?.name,
+          client: client?.name,
           typeLabel: docType,
           items: cart.map(item => ({ desc: item.name, price: item.total })),
           total: total,
@@ -335,7 +343,6 @@ const SalesModule: React.FC<SalesModuleProps> = ({ products, clients, categories
       });
 
       setShowPaymentModal(false);
-      setCart([]);
       setShowTicket(true);
   };
 
@@ -373,6 +380,19 @@ const SalesModule: React.FC<SalesModuleProps> = ({ products, clients, categories
                     </select>
                </div>
            </div>
+
+           <button 
+                onClick={() => setShowRecoverModal(true)}
+                className="relative shrink-0 px-4 py-3 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl shadow-sm hover:border-blue-500 hover:text-blue-600 transition-colors text-slate-500 dark:text-slate-300"
+                title="Recuperar Venta Guardada"
+            >
+                <ClipboardList size={20} />
+                {quotations.length > 0 && (
+                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center border-2 border-slate-50 dark:border-slate-700/30">
+                        {quotations.length}
+                    </span>
+                )}
+            </button>
            
            {/* Dropdown Results */}
            {filteredProducts.length > 0 && (
@@ -499,10 +519,10 @@ const SalesModule: React.FC<SalesModuleProps> = ({ products, clients, categories
                      {clients.map(c => <option key={c.id} value={c.name}>{c.dni ? `DNI: ${c.dni}` : ''}</option>)}
                   </datalist>
                   <div className="flex justify-between mt-1">
-                      <span className="text-xs text-slate-500 dark:text-slate-400 truncate">{selectedClient?.dni || '---'}</span>
-                      {selectedClient && selectedClient.digitalBalance > 0 && (
+                      <span className="text-xs text-slate-500 dark:text-slate-400 truncate">{client?.dni || '---'}</span>
+                      {client && client.digitalBalance > 0 && (
                           <span className="text-xs font-bold text-emerald-600 flex items-center gap-1">
-                              <Wallet size={10}/> S/ {selectedClient.digitalBalance.toFixed(2)}
+                              <Wallet size={10}/> S/ {client.digitalBalance.toFixed(2)}
                           </span>
                       )}
                   </div>
@@ -547,6 +567,46 @@ const SalesModule: React.FC<SalesModuleProps> = ({ products, clients, categories
             </div>
          </button>
       </div>
+
+      {/* --- RECOVER QUOTATION MODAL --- */}
+      {showRecoverModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w-2xl flex flex-col max-h-[80vh] animate-in fade-in zoom-in-95 border border-slate-200 dark:border-slate-700">
+                <div className="p-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center shrink-0">
+                    <h3 className="font-bold text-lg text-slate-800 dark:text-white flex items-center gap-2">
+                        <ClipboardList size={20} className="text-blue-500"/> Recuperar Venta Guardada
+                    </h3>
+                    <button onClick={() => setShowRecoverModal(false)}><X className="text-slate-400 hover:text-red-500"/></button>
+                </div>
+                <div className="flex-1 overflow-auto p-4 space-y-3">
+                    {quotations.length === 0 ? (
+                        <p className="text-center text-slate-400 py-8">No hay ventas guardadas.</p>
+                    ) : (
+                        quotations.map(q => (
+                            <div key={q.id} className="bg-slate-50 dark:bg-slate-900/50 p-3 rounded-lg border border-slate-200 dark:border-slate-700 flex justify-between items-center">
+                                <div>
+                                    <p className="font-bold text-slate-700 dark:text-white">#{q.id.substring(0, 6)} - {q.clientName}</p>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400">{q.date} {q.time} - {q.items.length} items</p>
+                                </div>
+                                <div className="flex items-center gap-4">
+                                    <span className="font-bold text-blue-600 dark:text-blue-400 text-lg">S/ {q.total.toFixed(2)}</span>
+                                    <button 
+                                        onClick={() => {
+                                            onLoadQuotation(q);
+                                            setShowRecoverModal(false);
+                                        }}
+                                        className="px-4 py-2 bg-blue-600 text-white font-bold rounded-lg text-xs flex items-center gap-2 hover:bg-blue-700"
+                                    >
+                                        <Upload size={14}/> Cargar
+                                    </button>
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
+            </div>
+        </div>
+      )}
 
       {/* --- PAYMENT MODAL --- */}
       {showPaymentModal && (
@@ -606,8 +666,8 @@ const SalesModule: React.FC<SalesModuleProps> = ({ products, clients, categories
                            {/* Saldo Warning */}
                            {currentPayment.method === 'Saldo Favor' && (
                                <div className="bg-emerald-50 dark:bg-emerald-900/20 p-3 rounded-lg border border-emerald-100 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 text-xs">
-                                   <div className="font-bold flex justify-between"><span>Saldo Disponible:</span> <span>S/ {selectedClient?.digitalBalance.toFixed(2)}</span></div>
-                                   {remainingTotal > (selectedClient?.digitalBalance || 0) && <div className="text-red-500 mt-1 font-bold">Saldo insuficiente para cubrir total.</div>}
+                                   <div className="font-bold flex justify-between"><span>Saldo Disponible:</span> <span>S/ {client?.digitalBalance.toFixed(2)}</span></div>
+                                   {remainingTotal > (client?.digitalBalance || 0) && <div className="text-red-500 mt-1 font-bold">Saldo insuficiente para cubrir total.</div>}
                                </div>
                            )}
 

@@ -5,7 +5,7 @@ import {
   LayoutDashboard, ShoppingCart, Package, Wrench, 
   Wallet, Users, Activity, ShoppingBag, FolderCog, FileSearch, Truck, Landmark, BrainCircuit, Moon, Sun,
   LogOut, Search, Bell, TrendingDown, TrendingUp, Printer, Shield, FileMinus, CreditCard, ChevronRight, Menu, Map, MessageCircle, Globe,
-  Database, Settings, BarChart3
+  Database, Settings, BarChart3, ClipboardList
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -31,6 +31,7 @@ const NAV_STRUCTURE = [
     icon: ShoppingCart,
     items: [
       { view: ViewState.POS, label: 'Punto de Venta', icon: ShoppingCart },
+      { view: ViewState.QUOTATIONS, label: 'Cotizaciones', icon: ClipboardList },
       { view: ViewState.SERVICES, label: 'Servicio Técnico', icon: Wrench },
       { view: ViewState.CLIENTS, label: 'Clientes', icon: Users },
       { view: ViewState.CREDIT_NOTE, label: 'Devoluciones', icon: FileMinus },

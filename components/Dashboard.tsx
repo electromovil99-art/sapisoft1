@@ -5,12 +5,13 @@ import {
   ArrowRight, CreditCard, Award, Megaphone, ArrowUpRight,
   MoreHorizontal, ChevronRight, Wallet, Activity
 } from 'lucide-react';
-import { ViewState, AuthSession } from '../types';
-import { MOCK_CASH_MOVEMENTS, MOCK_CLIENTS, MOCK_SERVICES } from '../constants';
+import { ViewState, AuthSession, CashMovement } from '../types';
+import { MOCK_CLIENTS } from '../constants';
 
 interface DashboardProps {
   onNavigate: (view: ViewState) => void;
   session?: AuthSession | null;
+  cashMovements: CashMovement[];
 }
 
 // 1. Goal Ring Component
@@ -56,17 +57,17 @@ const ClientAcquisitionChart = () => {
     );
 };
 
-const Dashboard: React.FC<DashboardProps> = ({ onNavigate, session }) => {
+const Dashboard: React.FC<DashboardProps> = ({ onNavigate, session, cashMovements }) => {
   const userName = session?.user.fullName || 'Usuario';
   const dailyGoal = 1500.00;
 
   const stats = useMemo(() => {
-      const mySalesToday = MOCK_CASH_MOVEMENTS
-          .filter(m => m.type === 'Ingreso' && m.user.includes(userName.split(' ')[0]) && m.concept.toLowerCase().includes('venta'))
+      const mySalesToday = cashMovements
+          .filter(m => m.type === 'Ingreso' && m.user === userName && m.category === 'Venta')
           .reduce((acc, m) => acc + m.amount, 0);
 
-      const storeSalesToday = MOCK_CASH_MOVEMENTS
-          .filter(m => m.type === 'Ingreso' && m.concept.toLowerCase().includes('venta'))
+      const storeSalesToday = cashMovements
+          .filter(m => m.type === 'Ingreso' && m.category === 'Venta')
           .reduce((acc, m) => acc + m.amount, 0);
 
       const myReceivables = MOCK_CLIENTS
@@ -75,7 +76,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, session }) => {
       const newClientsCount = MOCK_CLIENTS.filter(c => c.tags?.includes('Nuevo')).length;
 
       return { mySalesToday, storeSalesToday, myReceivables, newClientsCount };
-  }, [userName]);
+  }, [userName, cashMovements]);
 
   const progressColor = stats.mySalesToday >= dailyGoal ? '#10b981' : '#6366f1';
 
