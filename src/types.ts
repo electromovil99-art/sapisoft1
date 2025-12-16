@@ -1,4 +1,5 @@
 
+
 export enum ViewState {
   DASHBOARD = 'DASHBOARD',
   POS = 'POS',
@@ -22,9 +23,11 @@ export enum ViewState {
   CLIENT_WALLET = 'CLIENT_WALLET',
   LOCATIONS = 'LOCATIONS',
   WHATSAPP = 'WHATSAPP', 
+  DATABASE_CONFIG = 'DATABASE_CONFIG', // New View
   SUPER_ADMIN_DASHBOARD = 'SUPER_ADMIN_DASHBOARD'
 }
 
+// --- AUTH TYPES ---
 export type UserRole = 'SUPER_ADMIN' | 'ADMIN' | 'VENDEDOR' | 'TECNICO' | 'CAJERO';
 export type IndustryType = 'TECH' | 'PHARMA' | 'RETAIL'; 
 export type PlanType = 'BASICO' | 'INTERMEDIO' | 'FULL';
@@ -49,6 +52,8 @@ export interface SystemUser {
     role: UserRole;
     active: boolean;
     permissions: string[];
+    pin?: string; 
+    avatar?: string;
     industry: IndustryType; 
     companyName: string; 
 }
@@ -86,12 +91,14 @@ export interface Client {
   district?: string;
   province?: string;
   department?: string;
+  
   creditLine: number;
   creditUsed: number;
   totalPurchases: number;
   lastPurchaseDate?: string;
   paymentScore: 1 | 2 | 3 | 4 | 5;
   tags?: string[];
+  
   digitalBalance: number;
 }
 
@@ -100,12 +107,20 @@ export interface Supplier {
   name: string;
   ruc: string;
   phone?: string;
+  email?: string;
   address?: string;
   contactName?: string;
 }
 
-export interface Brand { id: string; name: string; }
-export interface Category { id: string; name: string; }
+export interface Brand {
+    id: string;
+    name: string;
+}
+
+export interface Category {
+    id: string;
+    name: string;
+}
 
 export interface BankAccount {
     id: string;
@@ -179,6 +194,12 @@ export interface ServiceOrder {
 
 export type PaymentMethodType = 'Efectivo' | 'Yape' | 'Plin' | 'Tarjeta' | 'Deposito' | 'Saldo Favor';
 
+export interface CashItemDetail {
+    description: string;
+    quantity: number;
+    price: number;
+}
+
 export interface CashMovement {
   id: string;
   time: string;
@@ -188,6 +209,7 @@ export interface CashMovement {
   referenceId?: string;
   amount: number;
   user: string;
+  relatedItems?: CashItemDetail[];
   financialType?: 'Fijo' | 'Variable';
   category?: string;
 }
@@ -207,6 +229,7 @@ export interface GeoLocation {
     parentId?: string;
 }
 
+// --- WHATSAPP & CHAT TYPES ---
 export interface Message {
     id: string;
     text: string;

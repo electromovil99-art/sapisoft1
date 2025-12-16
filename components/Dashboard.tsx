@@ -62,11 +62,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, session }) => {
 
   const stats = useMemo(() => {
       const mySalesToday = MOCK_CASH_MOVEMENTS
-          .filter(m => m.type === 'Ingreso' && m.user.includes(userName.split(' ')[0]) && m.category?.includes('Venta'))
+          .filter(m => m.type === 'Ingreso' && m.user.includes(userName.split(' ')[0]) && m.concept.toLowerCase().includes('venta'))
           .reduce((acc, m) => acc + m.amount, 0);
 
       const storeSalesToday = MOCK_CASH_MOVEMENTS
-          .filter(m => m.type === 'Ingreso' && m.category?.includes('Venta'))
+          .filter(m => m.type === 'Ingreso' && m.concept.toLowerCase().includes('venta'))
           .reduce((acc, m) => acc + m.amount, 0);
 
       const myReceivables = MOCK_CLIENTS

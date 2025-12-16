@@ -4,7 +4,8 @@ import { ViewState, AuthSession } from '../types';
 import { 
   LayoutDashboard, ShoppingCart, Package, Wrench, 
   Wallet, Users, Activity, ShoppingBag, FolderCog, FileSearch, Truck, Landmark, BrainCircuit, Moon, Sun,
-  LogOut, Search, Bell, TrendingDown, TrendingUp, Printer, Shield, FileMinus, CreditCard, ChevronRight, Menu, Map, MessageCircle, Globe
+  LogOut, Search, Bell, TrendingDown, TrendingUp, Printer, Shield, FileMinus, CreditCard, ChevronRight, Menu, Map, MessageCircle, Globe,
+  Database, Settings, BarChart3
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -33,7 +34,7 @@ const NAV_STRUCTURE = [
       { view: ViewState.SERVICES, label: 'Servicio Técnico', icon: Wrench },
       { view: ViewState.CLIENTS, label: 'Clientes', icon: Users },
       { view: ViewState.CREDIT_NOTE, label: 'Devoluciones', icon: FileMinus },
-      { view: ViewState.WHATSAPP, label: 'WhatsApp CRM', icon: MessageCircle }, // Added WhatsApp
+      { view: ViewState.WHATSAPP, label: 'WhatsApp CRM', icon: MessageCircle }, 
     ]
   },
   {
@@ -61,15 +62,23 @@ const NAV_STRUCTURE = [
     ]
   },
   {
-    id: 'gestion',
-    label: 'Gestión',
-    icon: Activity,
+    id: 'reportes',
+    label: 'Reportes',
+    icon: BarChart3,
     items: [
       { view: ViewState.BUSINESS_EVOLUTION, label: 'Evolución', icon: Activity },
       { view: ViewState.FINANCIAL_STRATEGY, label: 'Estrategia IA', icon: BrainCircuit },
       { view: ViewState.HISTORY_QUERIES, label: 'Historial', icon: FileSearch },
+    ]
+  },
+  {
+    id: 'configuracion',
+    label: 'Config.',
+    icon: Settings,
+    items: [
       { view: ViewState.USER_PRIVILEGES, label: 'Usuarios', icon: Shield },
       { view: ViewState.CONFIG_PRINTER, label: 'Impresoras', icon: Printer },
+      { view: ViewState.DATABASE_CONFIG, label: 'Base de Datos', icon: Database }, // <-- ¡AHORA VISIBLE AQUÍ!
     ]
   }
 ];
@@ -87,7 +96,7 @@ const Layout: React.FC<LayoutProps> = ({ children, currentView, onNavigate, isDa
   return (
     <div className={`flex flex-col h-screen w-screen bg-[#f8fafc] dark:bg-[#020617] overflow-hidden transition-colors duration-300 font-sans`}>
       
-      {/* 1. TOP HEADER - Redesigned for aesthetics */}
+      {/* 1. TOP HEADER */}
       <header className={`
           relative shrink-0 z-30 shadow-xl transition-all duration-300
           ${isSuperAdmin 
@@ -204,7 +213,7 @@ const Layout: React.FC<LayoutProps> = ({ children, currentView, onNavigate, isDa
          </div>
       </header>
 
-      {/* 2. SUB HEADER (Standard Users Only) - Cleaner look */}
+      {/* 2. SUB HEADER (Standard Users Only) */}
       {!isSuperAdmin && activeCategory && activeCategory.items && (
           <div className="bg-white/90 dark:bg-[#0f172a]/95 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 shrink-0 shadow-sm z-20 transition-colors duration-300">
               <div className="max-w-[1920px] mx-auto px-4 h-11 flex items-center overflow-x-auto no-scrollbar gap-1">

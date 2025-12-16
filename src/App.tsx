@@ -22,7 +22,8 @@ import LocationsModule from './components/LocationsModule';
 import LoginScreen from './components/LoginScreen'; 
 import SuperAdminModule from './components/SuperAdminModule'; 
 import WhatsAppModule from './components/WhatsAppModule'; 
-import CashModule from './components/CashModule'; // Imported external module
+import CashModule from './components/CashModule'; 
+import DatabaseModule from './components/DatabaseModule'; // Imported
 
 import { 
     ViewState, CashMovement, Product, ServiceOrder, Client, CartItem, PaymentMethodType, 
@@ -165,6 +166,15 @@ const App: React.FC = () => {
       setCurrentView(ViewState.WHATSAPP);
   };
 
+  const handleSyncDownload = (data: any) => {
+      if(data.products) setProducts(data.products);
+      if(data.clients) setClients(data.clients);
+      if(data.sales) setSalesHistory(data.sales);
+      if(data.movements) setCashMovements(data.movements);
+      if(data.services) setServices(data.services);
+      alert("Datos sincronizados desde la nube correctamente.");
+  };
+
   const handleAddClient = (client: Client) => { setClients([...clients, client]); };
   const handleUpdateClientBalance = (clientId: string, amount: number, reason: string) => { setClients(clients.map(c => c.id === clientId ? { ...c, digitalBalance: c.digitalBalance + amount } : c)); if (amount !== 0) { setCashMovements([...cashMovements, { id: Math.random().toString(), time: new Date().toLocaleTimeString(), type: amount > 0 ? 'Ingreso' : 'Egreso', paymentMethod: 'Efectivo', concept: `Billetera: ${reason}`, amount: Math.abs(amount), user: session?.user.username || 'ADMIN', category: 'Billetera Clientes', financialType: 'Variable' }]); } };
   const handleProcessSale = (cart: CartItem[], total: number, docType: string, clientName: string, paymentBreakdown: PaymentBreakdown, ticketId: string) => { const newSale: SaleRecord = { id: ticketId, date: new Date().toLocaleDateString('es-PE'), time: new Date().toLocaleTimeString('es-PE'), clientName: clientName, docType: docType, total: total, items: cart, paymentBreakdown: paymentBreakdown, user: session?.user.username || 'ADMIN' }; setSalesHistory([...salesHistory, newSale]); const newProducts = [...products]; const newStockMovements = [...stockMovements]; cart.forEach(item => { const productIndex = newProducts.findIndex(p => p.id === item.id); if (productIndex >= 0) { const prevStock = newProducts[productIndex].stock; newProducts[productIndex] = { ...newProducts[productIndex], stock: prevStock - item.quantity }; newStockMovements.push({ id: Math.random().toString(), date: new Date().toLocaleDateString('es-PE'), time: new Date().toLocaleTimeString('es-PE'), productId: item.id, productName: item.name, type: 'SALIDA', quantity: item.quantity, currentStock: prevStock - item.quantity, reference: `Venta #${ticketId}`, user: session?.user.username || 'ADMIN' }); } }); setProducts(newProducts); setStockMovements(newStockMovements); const incomeEntries: CashMovement[] = []; const createMovement = (method: PaymentMethodType, amount: number) => ({ id: Math.random().toString(), time: new Date().toLocaleTimeString(), type: 'Ingreso' as const, paymentMethod: method, concept: `Venta ${docType} #${ticketId}`, amount: amount, user: session?.user.username || 'ADMIN', referenceId: ticketId, category: 'Venta', financialType: 'Variable' as const }); if (paymentBreakdown.cash > 0) incomeEntries.push(createMovement('Efectivo', paymentBreakdown.cash)); if (paymentBreakdown.yape > 0) incomeEntries.push(createMovement('Yape', paymentBreakdown.yape)); if (paymentBreakdown.card > 0) incomeEntries.push(createMovement('Tarjeta', paymentBreakdown.card)); if (paymentBreakdown.bank > 0) incomeEntries.push(createMovement('Deposito', paymentBreakdown.bank)); setCashMovements([...cashMovements, ...incomeEntries]); if (paymentBreakdown.wallet && paymentBreakdown.wallet > 0) { const client = clients.find(c => c.name === clientName); if (client) { setClients(clients.map(c => c.id === client.id ? { ...c, digitalBalance: c.digitalBalance - (paymentBreakdown.wallet || 0) } : c)); } } };
@@ -253,6 +263,7 @@ const App: React.FC = () => {
                 {currentView === ViewState.CLIENT_WALLET && <ClientWalletModule clients={clients} locations={locations} onUpdateClientBalance={handleUpdateClientBalance} onAddClient={handleAddClient}/>}
                 {currentView === ViewState.LOCATIONS && <LocationsModule locations={locations} onAddLocation={(l) => setLocations([...locations, l])} onDeleteLocation={(id) => setLocations(locations.filter(l => l.id !== id))} />}
                 {currentView === ViewState.WHATSAPP && <WhatsAppModule products={products} clients={clients} chats={chats} setChats={setChats} initialContact={waInitialContact}/>}
+                {currentView === ViewState.DATABASE_CONFIG && <DatabaseModule data={{products, clients, movements: cashMovements, sales: salesHistory, services}} onSyncDownload={handleSyncDownload}/>}
             </>
         )}
     </Layout>
