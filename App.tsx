@@ -21,7 +21,7 @@ import ClientWalletModule from './components/ClientWalletModule';
 import LocationsModule from './components/LocationsModule'; 
 import LoginScreen from './components/LoginScreen'; 
 import SuperAdminModule from './components/SuperAdminModule'; 
-import WhatsAppModule from './components/WhatsAppModule'; // Import
+import WhatsAppModule from './components/WhatsAppModule'; 
 import CashModule from './components/CashModule';
 import DatabaseModule from './components/DatabaseModule';
 import QuotationModule from './components/QuotationModule';
@@ -29,7 +29,7 @@ import InventoryControlModule from './components/InventoryControlModule';
 import InventoryReportModule from './components/InventoryReportModule';
 import SalesReportModule from './components/SalesReportModule';
 import ProfitReportModule from './components/ProfitReportModule';
-
+import MediaEditorModule from './components/MediaEditorModule'; // Imported
 
 import { 
     ViewState, CashMovement, Product, ServiceOrder, Client, CartItem, PaymentMethodType, 
@@ -95,6 +95,10 @@ const App: React.FC = () => {
   const [systemUsers, setSystemUsers] = useState<SystemUser[]>(INITIAL_USERS); // User Management
   const [tenants, setTenants] = useState<Tenant[]>(INITIAL_TENANTS); // Tenant Management
 
+  // --- CUSTOMIZATION STATE ---
+  const [loginHeroImage, setLoginHeroImage] = useState<string | undefined>(undefined);
+  const [loginFeatureImage, setLoginFeatureImage] = useState<string | undefined>(undefined);
+
   // Persist State
   useEffect(() => {
       const storedUsers = localStorage.getItem('sapisoft_users');
@@ -149,7 +153,7 @@ const App: React.FC = () => {
   }, [clients, posClient]);
   
   // Auto-save quotation when navigating away from POS
-  const prevViewRef = useRef<ViewState>();
+  const prevViewRef = useRef<ViewState>(ViewState.DASHBOARD);
   useEffect(() => {
     const previousView = prevViewRef.current;
     if (previousView === ViewState.POS && currentView !== ViewState.POS && posCart.length > 0) {
@@ -204,7 +208,6 @@ const App: React.FC = () => {
 
   const handleLogout = () => {
       setSession(null);
-      // FIX: setCurrentView was called without arguments. It should reset to the dashboard view.
       setCurrentView(ViewState.DASHBOARD);
       setProducts([]); 
   };
@@ -421,7 +424,9 @@ const App: React.FC = () => {
               onLogin={handleLogin} 
               users={systemUsers} 
               tenants={tenants} 
-              onResetPassword={handlePasswordReset} 
+              onResetPassword={handlePasswordReset}
+              heroImage={loginHeroImage} // Passing custom images
+              featureImage={loginFeatureImage}
           />
       );
   }
@@ -443,7 +448,7 @@ const App: React.FC = () => {
 
         {currentView !== ViewState.SUPER_ADMIN_DASHBOARD && (
             <>
-                {currentView === ViewState.DASHBOARD && <Dashboard onNavigate={setCurrentView} session={session} cashMovements={cashMovements} clients={clients}/>}
+                {currentView === ViewState.DASHBOARD && <Dashboard onNavigate={setCurrentView} session={session} cashMovements={cashMovements} clients={clients} services={services} />}
                 {currentView === ViewState.POS && <SalesModule products={products} clients={clients} categories={categories} purchasesHistory={purchasesHistory} bankAccounts={bankAccounts} locations={locations} onAddClient={handleAddClient} onProcessSale={handleProcessSale} cart={posCart} setCart={setPosCart} client={posClient} setClient={setPosClient} quotations={quotations} onLoadQuotation={handleLoadQuotation} />}
                 {currentView === ViewState.INVENTORY && <InventoryModule products={products} brands={brands} categories={categories} onUpdateProduct={(p) => setProducts(products.map(pr => pr.id === p.id ? p : pr))} onAddProduct={(p) => setProducts([...products, p])} onDeleteProduct={(id) => setProducts(products.filter(p => p.id !== id))} onNavigate={setCurrentView}/>}
                 {currentView === ViewState.INVENTORY_CONTROL && <InventoryControlModule onStart={handleStartInventoryCount} inventoryCount={inventoryCount} onUpdateCount={handleUpdateInventoryCount} onFinalize={handleFinalizeInventoryCount} />}
@@ -475,6 +480,11 @@ const App: React.FC = () => {
                     isSyncEnabled={isSyncEnabled}
                     data={{products, clients, movements: cashMovements, sales: salesHistory, services, suppliers, brands, categories, bankAccounts}} 
                     onSyncDownload={handleSyncDownload}
+                />}
+                {/* NEW MODULE INTEGRATION */}
+                {currentView === ViewState.MEDIA_EDITOR && <MediaEditorModule 
+                    onUpdateHeroImage={(url) => { setLoginHeroImage(url); alert('Portada de Login actualizada!'); }}
+                    onUpdateFeatureImage={(url) => { setLoginFeatureImage(url); alert('Imagen Secundaria actualizada!'); }}
                 />}
             </>
         )}

@@ -11,6 +11,8 @@ interface LoginScreenProps {
     onResetPassword?: (userId: string, newPass: string) => void;
     users: SystemUser[];
     tenants: Tenant[];
+    heroImage?: string; // New Prop
+    featureImage?: string; // New Prop
 }
 
 const StatsSection = () => (
@@ -73,7 +75,7 @@ const FeaturesSection = () => (
     </section>
 );
 
-const IndustryTabsSection = () => {
+const IndustryTabsSection = ({ featureImage }: { featureImage?: string }) => {
     const [activeTab, setActiveTab] = useState('talleres');
     
     return (
@@ -112,11 +114,26 @@ const IndustryTabsSection = () => {
                             </button>
                         </div>
                     </div>
-                    <div className="relative">
-                        <img className="w-full rounded-2xl shadow-xl" src="https://images.unsplash.com/photo-1605826034235-52468c741b8a?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Taller de reparación de celulares" />
-                        <div className="absolute bottom-4 right-4 rounded-xl bg-white/70 p-4 backdrop-blur-md dark:bg-black/50">
-                            <h4 className="font-bold text-slate-900 dark:text-white">Módulo Taller</h4>
-                            <p className="text-sm text-slate-600 dark:text-slate-300">Gestión visual de órdenes de trabajo</p>
+                    
+                    {/* SECOND IMAGE - MODERN INVENTORY/TABLET */}
+                    <div className="relative group perspective-1000">
+                        <div className="absolute -inset-1 bg-gradient-to-r from-primary to-purple-600 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
+                        <div className="relative rounded-2xl shadow-xl overflow-hidden border border-white/10">
+                            <img 
+                                className="w-full h-full object-cover grayscale-[20%] group-hover:grayscale-0 transition-all duration-500" 
+                                src={featureImage || "https://images.unsplash.com/photo-1580508174046-170816f65662?q=80&w=2670&auto=format&fit=crop"} 
+                                alt="SapiSoft Inventory Management" 
+                            />
+                            {/* BRAND PURPLE OVERLAY */}
+                            <div className="absolute inset-0 bg-primary/20 mix-blend-overlay pointer-events-none"></div>
+                            
+                            <div className="absolute bottom-4 right-4 rounded-xl bg-white/90 p-4 backdrop-blur-md dark:bg-black/80 shadow-lg border border-primary/20">
+                                <h4 className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                    <div className="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
+                                    Control de Stock
+                                </h4>
+                                <p className="text-xs text-slate-600 dark:text-slate-300 mt-1">Gestión en tiempo real.</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -178,7 +195,7 @@ const PricingSection = () => (
 );
 
 
-const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onResetPassword, users, tenants }) => {
+const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onResetPassword, users, tenants, heroImage, featureImage }) => {
     // --- VIEW STATE ---
     const [showLoginModal, setShowLoginModal] = useState(false);
     
@@ -386,11 +403,16 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onResetPassword, use
                         <div className="animate-float relative z-10 w-full max-w-lg transform transition-transform hover:rotate-1 duration-500">
                           <div className="glass-panel p-2 rounded-2xl shadow-2xl border-4 border-white/20">
                             <div className="rounded-xl overflow-hidden bg-white dark:bg-gray-800 aspect-[4/3] relative">
+                              {/* HERO IMAGE REPLACEMENT: DYNAMIC */}
                               <img
-                                alt="SapiSoft Dashboard Interface showing sales analytics and charts"
-                                className="object-cover w-full h-full"
-                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuAOtu7P9RegbVeXjx7-SLG4TssWWNo7unGSEeBDw2I0CIwQBXdiiPDqa4U3S4PruEoV4ewMR5zniidtvyvQi7y4ewyyI_vH8dsBxYabcYPW6Y-O45Uqc2RrmWVVEtRGfJnAJs4JEVLeor4UVc9A85kePvNxqOyWdDcCQg0sbqT1it_0ZbBA6BZNN_T3Ar3cRWIavO57KB9WJvJEfxKgrkuJmoRScgAghTTb5Nv3dywTBq7B5AJCvWWMIYIukltOv084MJczZhmlzWU"
+                                alt="SapiSoft SaaS Dashboard Interface with Analytics"
+                                className="object-cover w-full h-full grayscale-[10%]"
+                                src={heroImage || "https://images.unsplash.com/photo-1556155092-490a1ba16284?q=80&w=2670&auto=format&fit=crop"}
                               />
+                              {/* PRIMARY COLOR BRAND OVERLAY */}
+                              <div className="absolute inset-0 bg-primary/20 mix-blend-overlay pointer-events-none"></div>
+                              <div className="absolute inset-0 bg-gradient-to-t from-primary/30 to-transparent opacity-60 pointer-events-none"></div>
+                              
                               <div className="absolute -bottom-6 -right-6 glass-card p-4 rounded-xl flex items-center gap-3 animate-float" style={{ animationDelay: '1s' }}>
                                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-300">
                                   <span className="material-symbols-outlined">trending_up</span>
@@ -410,7 +432,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onResetPassword, use
 
                 <StatsSection />
                 <FeaturesSection />
-                <IndustryTabsSection />
+                <IndustryTabsSection featureImage={featureImage} />
                 <PricingSection />
             </main>
             

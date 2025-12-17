@@ -5,7 +5,7 @@ import {
   LayoutDashboard, ShoppingCart, Package, Wrench, 
   Wallet, Users, Activity, ShoppingBag, FolderCog, FileSearch, Truck, Landmark, BrainCircuit, Moon, Sun,
   LogOut, Search, Bell, TrendingDown, TrendingUp, Printer, Shield, FileMinus, CreditCard, ChevronRight, Menu, Map, MessageCircle, Globe,
-  Database, Settings, BarChart3, ClipboardList, Cloud, CloudOff, FileScan, FileBarChart, PieChart
+  Database, Settings, BarChart3, ClipboardList, Cloud, CloudOff, FileScan, FileBarChart, PieChart, Image as ImageIcon
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -16,8 +16,8 @@ interface LayoutProps {
   toggleTheme: () => void;
   session?: AuthSession; 
   onLogout?: () => void; 
-  isSyncEnabled: boolean; // NEW
-  toggleSyncMode: () => void; // NEW
+  isSyncEnabled: boolean;
+  toggleSyncMode: () => void;
 }
 
 const NAV_STRUCTURE = [
@@ -87,8 +87,9 @@ const NAV_STRUCTURE = [
     icon: Settings,
     items: [
       { view: ViewState.USER_PRIVILEGES, label: 'Usuarios', icon: Shield },
+      { view: ViewState.MEDIA_EDITOR, label: 'Gestor Multimedia', icon: ImageIcon },
       { view: ViewState.CONFIG_PRINTER, label: 'Impresoras', icon: Printer },
-      { view: ViewState.DATABASE_CONFIG, label: 'Base de Datos', icon: Database }, // <-- ¡AHORA VISIBLE AQUÍ!
+      { view: ViewState.DATABASE_CONFIG, label: 'Base de Datos', icon: Database },
     ]
   }
 ];
@@ -151,12 +152,12 @@ const Layout: React.FC<LayoutProps> = ({ children, currentView, onNavigate, isDa
                                 onClick={handleClick}
                                 className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-300 relative group
                                     ${isActive 
-                                        ? 'bg-white text-primary-700 dark:bg-slate-100 dark:text-primary-600 shadow-md transform scale-105' 
+                                        ? 'bg-white text-primary-700 dark:bg-slate-700 dark:text-white shadow-md transform scale-105' 
                                         : 'text-white/80 hover:text-white hover:bg-white/10'
                                     }
                                 `}
                             >
-                                <Icon size={16} strokeWidth={isActive ? 2.5 : 2} className={isActive ? 'text-primary-600' : ''} />
+                                <Icon size={16} strokeWidth={isActive ? 2.5 : 2} className={isActive ? 'text-primary-600 dark:text-white' : ''} />
                                 <span>{cat.label}</span>
                             </button>
                         );
@@ -241,12 +242,12 @@ const Layout: React.FC<LayoutProps> = ({ children, currentView, onNavigate, isDa
                               onClick={() => onNavigate(item.view)}
                               className={`flex items-center gap-2 px-3 py-1 rounded-md text-xs font-bold transition-all whitespace-nowrap border
                                   ${isActiveSub
-                                      ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 border-primary-100 dark:border-primary-800'
+                                      ? 'bg-primary-50 dark:bg-primary-600 text-primary-700 dark:text-white border-primary-100 dark:border-primary-500'
                                       : 'text-slate-500 dark:text-slate-400 border-transparent hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-slate-200'
                                   }
                               `}
                           >
-                              <ItemIcon size={14} strokeWidth={isActiveSub ? 2.5 : 2} className={isActiveSub ? 'text-primary-600 dark:text-primary-400' : 'opacity-70'}/>
+                              <ItemIcon size={14} strokeWidth={isActiveSub ? 2.5 : 2} className={isActiveSub ? 'text-primary-600 dark:text-white' : 'opacity-70'}/>
                               {item.label}
                           </button>
                       )

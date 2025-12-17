@@ -65,8 +65,9 @@ export const MOCK_SERVICES: ServiceOrder[] = [
 ];
 
 export const MOCK_CASH_MOVEMENTS: CashMovement[] = [
-  { id: '1', time: '09:23:23', type: 'Ingreso', paymentMethod: 'Efectivo', concept: 'Venta con Ticket Nro. 68031', amount: 6.00, user: 'Jose Luis Gama', category: 'Venta', financialType: 'Variable' },
-  { id: '2', time: '09:38:28', type: 'Egreso', paymentMethod: 'Efectivo', concept: 'Nota de Credito Nro. 7589', amount: 6.00, user: 'Jose Luis Gama', category: 'Devoluciones', financialType: 'Variable' },
+  // FIX: Changed user name to 'Juan Vendedor' for consistency with dashboard logic.
+  { id: '1', time: '09:23:23', type: 'Ingreso', paymentMethod: 'Efectivo', concept: 'Venta con Ticket Nro. 68031', amount: 6.00, user: 'Juan Vendedor', category: 'Venta', financialType: 'Variable' },
+  { id: '2', time: '09:38:28', type: 'Egreso', paymentMethod: 'Efectivo', concept: 'Nota de Credito Nro. 7589', amount: 6.00, user: 'Juan Vendedor', category: 'Devoluciones', financialType: 'Variable' },
   { id: '3', time: '10:00:00', type: 'Egreso', paymentMethod: 'Yape', concept: 'Pago de Alquiler', amount: 500.00, user: 'Admin', category: 'Alquiler de Local', financialType: 'Fijo' },
 ];
 
