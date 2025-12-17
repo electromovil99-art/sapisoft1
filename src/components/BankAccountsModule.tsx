@@ -1,39 +1,85 @@
 
 import React, { useState } from 'react';
-import { Landmark, Plus, Trash2, Search, Building2, CreditCard } from 'lucide-react';
+import { Landmark, Plus, Trash2, Search, Building2, CreditCard, ArrowRightLeft, X, ArrowRight } from 'lucide-react';
 import { BankAccount } from '../types';
 
 interface BankAccountsModuleProps {
     bankAccounts: BankAccount[];
     onAddBankAccount: (b: BankAccount) => void;
     onDeleteBankAccount: (id: string) => void;
+    onUniversalTransfer: (from: string, to: string, amount: number, exchangeRate: number, reference: string) => void;
 }
 
-const BankAccountsModule: React.FC<BankAccountsModuleProps> = ({ bankAccounts, onAddBankAccount, onDeleteBankAccount }) => {
+const BankAccountsModule: React.FC<BankAccountsModuleProps> = ({ bankAccounts, onAddBankAccount, onDeleteBankAccount, onUniversalTransfer }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [newBank, setNewBank] = useState({ bankName: '', accountNumber: '', currency: 'PEN', alias: '' });
+    
+    // Transfer Modal State
+    const [showTransferModal, setShowTransferModal] = useState(false);
+    const [transferData, setTransferData] = useState({ from: '', to: '', amount: '', rate: '', reference: '' });
 
-    const filteredBanks = bankAccounts.filter(item => (item.bankName && item.bankName.toLowerCase().includes(searchTerm.toLowerCase())) || (item.alias && item.alias.toLowerCase().includes(searchTerm.toLowerCase())));
+    const filteredBanks = bankAccounts.filter(item => 
+        (item.bankName && item.bankName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (item.alias && item.alias.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
 
     const handleAdd = () => {
         if (newBank.bankName && newBank.accountNumber) {
             onAddBankAccount({ id: Math.random().toString(), ...newBank } as BankAccount);
             setNewBank({ bankName: '', accountNumber: '', currency: 'PEN', alias: '' });
-        } else { alert("Banco y Nro de Cuenta son obligatorios"); }
+        } else {
+             alert("Banco y Nro de Cuenta son obligatorios");
+        }
+    };
+    
+    const handleOpenTransferModal = () => {
+        setTransferData({ from: '', to: '', amount: '', rate: '', reference: '' });
+        setShowTransferModal(true);
+    };
+
+    const fromAccount = bankAccounts.find(b => b.id === transferData.from);
+    const toAccount = bankAccounts.find(b => b.id === transferData.to);
+    const showExchangeRate = fromAccount && toAccount && fromAccount.currency !== toAccount.currency;
+
+    const handleExecuteTransfer = () => {
+        const amountNum = parseFloat(transferData.amount);
+        const rateNum = parseFloat(transferData.rate || '1');
+        
+        if (!transferData.from || !transferData.to) return alert("Debe seleccionar cuenta de origen y destino.");
+        if (isNaN(amountNum) || amountNum <= 0) return alert("Monto inválido.");
+        if (showExchangeRate && (isNaN(rateNum) || rateNum <= 0)) return alert("Tipo de cambio inválido.");
+
+        onUniversalTransfer(transferData.from, transferData.to, amountNum, rateNum, transferData.reference);
+        setShowTransferModal(false);
     };
 
     return (
         <div className="flex h-full gap-6">
-            <div className="w-80 bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col shrink-0">
-                <h3 className="font-bold text-lg text-slate-800 dark:text-white mb-6 flex items-center gap-2"><Plus size={20} className="text-emerald-500 dark:text-emerald-400"/> Nueva Cuenta</h3>
+            
+            {/* Left: Form */}
+            <div className="w-96 bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col shrink-0">
+                <h3 className="font-bold text-lg text-slate-800 dark:text-white mb-6 flex items-center gap-2">
+                    <Plus size={20} className="text-emerald-500 dark:text-emerald-400"/> Nueva Cuenta
+                </h3>
+                
                 <div className="space-y-4 flex-1">
                     <div><label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Entidad Bancaria</label><input type="text" className="w-full p-3 border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-white rounded-lg outline-none focus:border-emerald-500 transition-colors" value={newBank.bankName} onChange={e => setNewBank({...newBank, bankName: e.target.value})} placeholder="Ej. BCP, INTERBANK"/></div>
                     <div><label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Nro. Cuenta / CCI</label><input type="text" className="w-full p-3 border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-white rounded-lg outline-none focus:border-emerald-500 transition-colors" value={newBank.accountNumber} onChange={e => setNewBank({...newBank, accountNumber: e.target.value})}/></div>
                     <div><label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Moneda</label><select className="w-full p-3 border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-white rounded-lg outline-none focus:border-emerald-500 transition-colors" value={newBank.currency} onChange={e => setNewBank({...newBank, currency: e.target.value as any})}><option value="PEN">Soles (PEN)</option><option value="USD">Dólares (USD)</option></select></div>
                     <div><label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Titular / Alias</label><input type="text" className="w-full p-3 border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-white rounded-lg outline-none focus:border-emerald-500 transition-colors" value={newBank.alias} onChange={e => setNewBank({...newBank, alias: e.target.value})} placeholder="Ej. Cuenta Principal"/></div>
                 </div>
-                <button onClick={handleAdd} className="w-full py-3 mt-6 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-100 dark:shadow-none">Guardar Cuenta</button>
+                
+                <div className="mt-6 space-y-3">
+                    <button onClick={handleAdd} className="w-full py-3 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-100 dark:shadow-none">
+                        Guardar Cuenta
+                    </button>
+                    <button onClick={handleOpenTransferModal} className="w-full py-2 border border-dashed border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-400 font-bold rounded-xl hover:border-blue-500 hover:text-blue-600 transition-colors flex items-center justify-center gap-2">
+                        <ArrowRightLeft size={16}/> Transferir entre Cuentas
+                    </button>
+                </div>
             </div>
+
+            {/* Right: List */}
             <div className="flex-1 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col overflow-hidden">
                 <div className="p-4 border-b border-slate-100 dark:border-slate-700 flex items-center gap-4 bg-slate-50/50 dark:bg-slate-700/30">
                      <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-lg"><Landmark size={20}/></div>
@@ -50,7 +96,57 @@ const BankAccountsModule: React.FC<BankAccountsModuleProps> = ({ bankAccounts, o
                     ))}
                 </div>
             </div>
+
+            {/* TRANSFER MODAL */}
+            {showTransferModal && (
+                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-[500px] animate-in fade-in zoom-in-95 border border-slate-200 dark:border-slate-700">
+                        <div className="p-6 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
+                            <h3 className="font-bold text-lg text-slate-800 dark:text-white flex items-center gap-2"><ArrowRightLeft size={20} className="text-blue-500"/> Transferencia Bancaria</h3>
+                            <button onClick={() => setShowTransferModal(false)}><X className="text-slate-400 hover:text-slate-600"/></button>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            <div className="grid grid-cols-[1fr_auto_1fr] gap-2 items-end">
+                                <div>
+                                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Origen</label>
+                                    <select className="w-full p-3 border rounded-lg bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white" value={transferData.from} onChange={e => setTransferData({...transferData, from: e.target.value})}>
+                                        <option value="">-- Seleccionar --</option>
+                                        {bankAccounts.map(b => <option key={b.id} value={b.id}>{b.alias || b.bankName} ({b.currency})</option>)}
+                                    </select>
+                                </div>
+                                <div className="text-center pb-4"><ArrowRight size={24} className="text-slate-400"/></div>
+                                <div>
+                                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Destino</label>
+                                    <select className="w-full p-3 border rounded-lg bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white" value={transferData.to} onChange={e => setTransferData({...transferData, to: e.target.value})}>
+                                        <option value="">-- Seleccionar --</option>
+                                        {bankAccounts.filter(b => b.id !== transferData.from).map(b => <option key={b.id} value={b.id}>{b.alias || b.bankName} ({b.currency})</option>)}
+                                    </select>
+                                </div>
+                            </div>
+                            <div className={`grid gap-4 ${showExchangeRate ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                                <div>
+                                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Monto a Enviar ({fromAccount?.currency})</label>
+                                    <input type="number" className="w-full p-3 border rounded-lg text-lg font-bold bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white" value={transferData.amount} onChange={e => setTransferData({...transferData, amount: e.target.value})} placeholder="0.00"/>
+                                </div>
+                                {showExchangeRate && (
+                                    <div className="animate-in fade-in">
+                                        <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Tipo de Cambio</label>
+                                        <input type="number" step="0.01" className="w-full p-3 border rounded-lg text-lg font-bold bg-yellow-50 dark:bg-slate-700 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white" value={transferData.rate} onChange={e => setTransferData({...transferData, rate: e.target.value})} placeholder="Ej. 3.75"/>
+                                        <p className="text-[10px] text-slate-400 mt-1">1 {fromAccount?.currency === 'USD' ? 'USD' : 'PEN'} = {transferData.rate || '?'} {fromAccount?.currency === 'USD' ? 'PEN' : 'USD'}</p>
+                                    </div>
+                                )}
+                            </div>
+                            <div>
+                                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Referencia / Glosa</label>
+                                <input type="text" className="w-full p-2 border rounded-lg text-sm bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white" value={transferData.reference} onChange={e => setTransferData({...transferData, reference: e.target.value})} placeholder="Ej. Capital de trabajo"/>
+                            </div>
+                            <button onClick={handleExecuteTransfer} className="w-full mt-2 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors">Confirmar Transferencia</button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
+
 export default BankAccountsModule;

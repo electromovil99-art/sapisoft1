@@ -67,11 +67,46 @@ const InventoryModule: React.FC<InventoryProps> = ({ products, brands, categorie
   };
 
   const handleDownloadTemplate = () => {
-    alert("Simulación: Descargando plantilla 'plantilla_inventario.xlsx'.\n\nLa plantilla debe contener las columnas: code, name, category, brand, price, stock, location.");
+    // Definir encabezados del CSV
+    const headers = "codigo,nombre,categoria,marca,precio_venta,stock,costo,ubicacion";
+    // Crear Blob con BOM para soporte de caracteres especiales (tildes, ñ)
+    const blob = new Blob(["\uFEFF" + headers], { type: 'text/csv;charset=utf-8;' });
+    
+    // Crear enlace temporal
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", "plantilla_carga_masiva.csv");
+    document.body.appendChild(link);
+    link.click();
+    
+    // Limpiar
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   const handleExportData = () => {
-    alert(`Simulación: Exportando ${filteredProducts.length} productos a 'export_inventario.xlsx'.`);
+    // 1. Encabezados
+    const headers = "ID,CODIGO,NOMBRE,CATEGORIA,MARCA,PRECIO,STOCK,COSTO,UBICACION";
+    
+    // 2. Procesar datos (usando filteredProducts para respetar la búsqueda actual)
+    const rows = filteredProducts.map(p => 
+        `"${p.id}","${p.code}","${p.name}","${p.category}","${p.brand || ''}",${p.price},${p.stock},${p.cost || 0},"${p.location || ''}"`
+    ).join("\n");
+
+    // 3. Unir contenido con BOM
+    const csvContent = "\uFEFF" + headers + "\n" + rows;
+    
+    // 4. Descargar
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `inventario_export_${new Date().toLocaleDateString().replace(/\//g, '-')}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -114,7 +149,7 @@ const InventoryModule: React.FC<InventoryProps> = ({ products, brands, categorie
                 <button onClick={() => excelImportRef.current?.click()} className="px-3 py-2 text-emerald-600 dark:text-emerald-400 text-sm font-bold hover:bg-emerald-50 dark:hover:bg-slate-600 flex items-center gap-2 transition-colors">
                     <Download size={16}/> Importar
                 </button>
-                <div className="w-px h-full bg-slate-200 dark:bg-slate-600"></div>
+                <div className="w-px h-full bg-slate-200 dark:border-slate-600"></div>
                 <button onClick={handleExportData} className="px-3 py-2 text-blue-600 dark:text-blue-400 text-sm font-bold hover:bg-blue-50 dark:hover:bg-slate-600 rounded-r-lg flex items-center gap-2 transition-colors">
                     <Share size={16}/> Exportar
                 </button>
@@ -142,29 +177,44 @@ const InventoryModule: React.FC<InventoryProps> = ({ products, brands, categorie
             <table className="w-full modern-table">
                <thead className="sticky top-0 z-10">
                   <tr>
-                     <th>Código</th>
-                     <th>Descripción</th>
-                     <th>Categoría</th>
-                     <th>Marca</th>
-                     <th className="text-center">Ubicación</th>
-                     <th className="text-right">Stock</th>
-                     <th className="text-right">Costo</th>
-                     <th className="text-right">Precio</th>
-                     <th className="text-center"></th>
+                     <th className="text-sm">Código</th>
+                     <th className="text-sm">Descripción</th>
+                     <th className="text-sm">Categoría</th>
+                     <th className="text-sm">Marca</th>
+                     <th className="text-center text-sm">Ubicación</th>
+                     <th className="text-right text-sm">Stock</th>
+                     <th className="text-right text-sm">Costo</th>
+                     <th className="text-right text-sm">Precio</th>
+                     <th className="text-center text-sm"></th>
                   </tr>
                </thead>
                <tbody>
                   {filteredProducts.map(p => (
                      <tr key={p.id} className="group transition-colors hover:bg-slate-50 dark:hover:bg-slate-700">
-                        <td className="font-mono text-slate-500 dark:text-slate-400 text-xs">{p.code}</td>
-                        <td className="font-medium text-slate-700 dark:text-white">{p.name}</td>
+                        <td className="font-mono text-slate-500 dark:text-slate-400 text-sm">{p.code}</td>
+                        <td className="font-medium text-slate-700 dark:text-white text-sm">{p.name}</td>
                         <td><span className="px-2 py-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs rounded-md font-medium">{p.category}</span></td>
-                        <td className="text-slate-500 dark:text-slate-400">{p.brand}</td>
-                        <td className="text-center text-slate-500 dark:text-slate-400">{p.location || '-'}</td>
-                        <td className="text-right"><span className={`font-bold px-2 py-1 rounded-md text-xs ${p.stock < 5 ? 'bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400' : 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400'}`}>{p.stock} un.</span></td>
-                        <td className="text-right text-slate-500 dark:text-slate-400">S/ {p.cost?.toFixed(2) || '0.00'}</td>
-                        <td className="text-right font-bold text-slate-800 dark:text-white">S/ {p.price.toFixed(2)}</td>
-                        <td className="text-center"><button onClick={() => onDeleteProduct(p.id)} className="text-slate-300 hover:text-red-500 transition-colors p-2"><Trash2 size={16}/></button></td>
+                        <td className="text-slate-500 dark:text-slate-400 text-sm">{p.brand}</td>
+                        <td className="text-center text-slate-500 dark:text-slate-400 text-sm">{p.location || '-'}</td>
+                        
+                        {/* ACTUALIZACIÓN: Stock solo número, fuente más grande y fondo visible */}
+                        <td className="text-right">
+                            <span className={`font-bold px-3 py-1 rounded-md text-base inline-block min-w-[3rem] text-center ${p.stock < 5 ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'}`}>
+                                {p.stock}
+                            </span>
+                        </td>
+                        
+                        {/* ACTUALIZACIÓN: Costo sin símbolo y fuente aumentada */}
+                        <td className="text-right text-slate-500 dark:text-slate-400 font-medium text-sm">
+                            {p.cost?.toFixed(2) || '0.00'}
+                        </td>
+                        
+                        {/* ACTUALIZACIÓN: Precio sin símbolo y fuente aumentada */}
+                        <td className="text-right font-bold text-slate-800 dark:text-white text-base">
+                            {p.price.toFixed(2)}
+                        </td>
+                        
+                        <td className="text-center"><button onClick={() => onDeleteProduct(p.id)} className="text-slate-300 hover:text-red-500 transition-colors p-2"><Trash2 size={18}/></button></td>
                      </tr>
                   ))}
                </tbody>

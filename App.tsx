@@ -405,6 +405,30 @@ const App: React.FC = () => {
       }
   };
 
+  const handleDeleteTenant = (tenantId: string) => {
+      const tenant = tenants.find(t => t.id === tenantId);
+      if(!tenant) return;
+      
+      setTenants(prev => prev.filter(t => t.id !== tenantId));
+      setSystemUsers(prev => prev.filter(u => u.companyName !== tenant.companyName));
+  };
+
+  // --- NEW: CLEAN DB FOR TENANT ---
+  const handleResetTenantData = (tenantId: string) => {
+      const tenant = tenants.find(t => t.id === tenantId);
+      if(!tenant) return;
+
+      const companyUsers = systemUsers.filter(u => u.companyName === tenant.companyName).map(u => u.username);
+      
+      // Clear data linked to users of this company
+      setSalesHistory(prev => prev.filter(s => !companyUsers.includes(s.user)));
+      setCashMovements(prev => prev.filter(m => !companyUsers.includes(m.user)));
+      setServices(prev => prev.filter(s => !companyUsers.includes(s.receptionist))); // Assuming receptionist links service
+      // Note: Products/Clients are "global" mock data in this specific App.tsx setup, so we don't delete them here to avoid breaking the demo for others, 
+      // but in a real DB they would be tenant-scoped.
+      // If we wanted to clear them from mock state based on current logic, we'd need a tenantId on those records.
+  };
+
   const handleAddFixedCategory = (category: string, type: 'Ingreso' | 'Egreso') => {
     if (type === 'Ingreso') {
         if (!fixedIncomeCategories.includes(category)) {
@@ -443,7 +467,13 @@ const App: React.FC = () => {
         toggleSyncMode={toggleSyncMode}
     >
         {currentView === ViewState.SUPER_ADMIN_DASHBOARD && (
-            <SuperAdminModule tenants={tenants} onAddTenant={handleCreateTenant} onUpdateTenant={handleUpdateTenant} />
+            <SuperAdminModule 
+                tenants={tenants} 
+                onAddTenant={handleCreateTenant} 
+                onUpdateTenant={handleUpdateTenant} 
+                onDeleteTenant={handleDeleteTenant} 
+                onResetTenantData={handleResetTenantData} // Passed here
+            />
         )}
 
         {currentView !== ViewState.SUPER_ADMIN_DASHBOARD && (

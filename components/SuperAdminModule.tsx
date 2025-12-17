@@ -1,12 +1,14 @@
 
 import React, { useState } from 'react';
-import { Building2, Plus, Search, User, Globe, CheckCircle, XCircle, Calendar, CreditCard, X, Edit, Power, Lock, Banknote, QrCode, Save, AlertTriangle, TrendingUp, Clock, DollarSign, ArrowUpRight, Flame, Wallet, Zap, Star, Crown, ChevronRight, Check, History, Calculator, ArrowRight, Gift, MessageCircle, FileText, Landmark, Filter, PieChart } from 'lucide-react';
+import { Building2, Plus, Search, User, Globe, CheckCircle, XCircle, Calendar, CreditCard, X, Edit, Power, Lock, Banknote, QrCode, Save, AlertTriangle, TrendingUp, Clock, DollarSign, ArrowUpRight, Flame, Wallet, Zap, Star, Crown, ChevronRight, Check, History, Calculator, ArrowRight, Gift, MessageCircle, FileText, Landmark, Filter, PieChart, Trash2, AlertOctagon, Database } from 'lucide-react';
 import { Tenant, SystemUser, IndustryType, PlanType, PaymentMethodType } from '../types';
 
 interface SuperAdminModuleProps {
     tenants: Tenant[];
     onAddTenant: (tenant: Tenant, adminUser: SystemUser) => void;
     onUpdateTenant: (id: string, updates: Partial<Tenant>, newPassword?: string) => void;
+    onDeleteTenant: (id: string) => void;
+    onResetTenantData: (id: string) => void; // Added prop for cleaning data
 }
 
 type MasterPaymentMethod = 'Efectivo' | 'Yape' | 'Plin' | 'Hotmart' | 'Bono' | 'Transferencia';
@@ -49,7 +51,7 @@ const getFutureDate = (daysForward: number) => {
     return d.toLocaleDateString('es-PE');
 };
 
-const SuperAdminModule: React.FC<SuperAdminModuleProps> = ({ tenants, onAddTenant, onUpdateTenant }) => {
+const SuperAdminModule: React.FC<SuperAdminModuleProps> = ({ tenants, onAddTenant, onUpdateTenant, onDeleteTenant, onResetTenantData }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [showCreateModal, setShowCreateModal] = useState(false);
     
@@ -201,6 +203,25 @@ const SuperAdminModule: React.FC<SuperAdminModuleProps> = ({ tenants, onAddTenan
 
         const url = `https://wa.me/51${tenant.phone.replace(/\s/g,'')}?text=${encodeURIComponent(msg)}`;
         window.open(url, '_blank');
+    };
+
+    const handleDeleteClick = (tenant: Tenant) => {
+        if (window.confirm(`¿Estás seguro de ELIMINAR la empresa "${tenant.companyName}"?\n\nEsta acción borrará a todos sus usuarios y su historial de pagos.`)) {
+            setPayments(prev => prev.filter(p => p.tenantName !== tenant.companyName));
+            onDeleteTenant(tenant.id);
+        }
+    };
+
+    // --- NEW: CLEAN DATABASE HANDLER ---
+    const handleCleanDatabaseClick = (tenant: Tenant) => {
+        const password = prompt(`ADVERTENCIA CRÍTICA: Estás a punto de borrar TODA la información (ventas, productos, caja) de "${tenant.companyName}".\n\nEsta acción es IRREVERSIBLE.\n\nPara confirmar, ingresa la CONTRASEÑA MAESTRA:`);
+        
+        if (password === "MASTER123") {
+            onResetTenantData(tenant.id);
+            alert(`Base de datos de "${tenant.companyName}" limpiada exitosamente.`);
+        } else if (password !== null) {
+            alert("Contraseña incorrecta. Acción cancelada.");
+        }
     };
 
     const handleCreate = () => {
@@ -457,9 +478,11 @@ const SuperAdminModule: React.FC<SuperAdminModuleProps> = ({ tenants, onAddTenan
                                 />
                             </div>
                         </div>
-                        <button onClick={() => setShowCreateModal(true)} className="w-full sm:w-auto bg-purple-600 text-white px-4 py-2 rounded-lg font-bold shadow-lg shadow-purple-200 dark:shadow-none hover:bg-purple-700 transition-colors flex items-center justify-center gap-2">
-                            <Plus size={18}/> Crear Empresa
-                        </button>
+                        <div className="flex gap-2 w-full sm:w-auto">
+                            <button onClick={() => setShowCreateModal(true)} className="w-full sm:w-auto bg-purple-600 text-white px-4 py-2 rounded-lg font-bold shadow-lg shadow-purple-200 dark:shadow-none hover:bg-purple-700 transition-colors flex items-center justify-center gap-2 text-sm">
+                                <Plus size={18}/> Crear Empresa
+                            </button>
+                        </div>
                     </div>
 
                     {/* Tenants Table */}
@@ -527,6 +550,20 @@ const SuperAdminModule: React.FC<SuperAdminModuleProps> = ({ tenants, onAddTenan
                                                     >
                                                         <Edit size={14}/> Gestionar
                                                     </button>
+                                                    <button 
+                                                        onClick={() => handleCleanDatabaseClick(tenant)} 
+                                                        className="text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20 px-2 py-1.5 rounded-lg font-bold text-xs flex items-center gap-2 border border-orange-200 dark:border-orange-900/30"
+                                                        title="Limpiar Base de Datos (Con Contraseña)"
+                                                    >
+                                                        <Database size={16}/>
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => handleDeleteClick(tenant)} 
+                                                        className="text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 px-2 py-1.5 rounded-lg font-bold text-xs flex items-center gap-2 border border-red-200 dark:border-red-900/30"
+                                                        title="Eliminar Empresa"
+                                                    >
+                                                        <Trash2 size={16}/>
+                                                    </button>
                                                 </div>
                                             </td>
                                         </tr>
@@ -539,6 +576,7 @@ const SuperAdminModule: React.FC<SuperAdminModuleProps> = ({ tenants, onAddTenan
 
                 {/* RIGHT: ALERTS & MASTER CASH SUMMARY */}
                 <div className="w-full lg:w-80 flex flex-col gap-6">
+                    {/* ... Existing Right Panel Code (Alerts/Cash) ... */}
                     <div className="flex-1 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden min-h-[350px]">
                         <div className="p-4 bg-emerald-50 dark:bg-emerald-900/10 border-b border-emerald-100 dark:border-emerald-900/30 flex justify-between items-center">
                             <h3 className="text-sm font-bold text-emerald-800 dark:text-emerald-200 flex items-center gap-2 uppercase">
@@ -606,7 +644,8 @@ const SuperAdminModule: React.FC<SuperAdminModuleProps> = ({ tenants, onAddTenan
                 </div>
             </div>
 
-            {/* --- MODAL: DETALLE DE COBROS / CAJA MAESTRA --- */}
+            {/* ... Modals (Create, Edit, Charge, Cash Detail) - Unchanged ... */}
+            {/* Same modals as before, just ensuring they render */}
             {showCashDetailModal && (
                 <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
                     <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-4xl h-[90vh] md:h-[85vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 border border-slate-200 dark:border-slate-700">
