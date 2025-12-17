@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Search, Trash2, Plus, Minus, X, CheckCircle, ShoppingBag, Truck, PackagePlus, Building2, FileText, Calendar, CreditCard, DollarSign, Edit3, Filter } from 'lucide-react';
 import { Product, CartItem, Supplier, Category } from '../types';
@@ -121,7 +122,7 @@ const PurchaseModule: React.FC<PurchaseModuleProps> = ({ products, suppliers, ca
   };
 
   return (
-    <div className="flex h-[calc(100vh-100px)] gap-6">
+    <div className="flex h-full gap-6">
       
       {/* LEFT: Product & Cart Section */}
       <div className="flex-1 flex flex-col gap-4 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
@@ -249,7 +250,9 @@ const PurchaseModule: React.FC<PurchaseModuleProps> = ({ products, suppliers, ca
               <span className="font-medium text-slate-700 dark:text-slate-300">S/ {(total - (total / 1.18)).toFixed(2)}</span>
            </div>
            <div className="flex justify-between items-center">
-              <span className="text-xl font-bold text-slate-800 dark:text-white">Total Compra</span>
+              <span className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                <DollarSign size={20}/> Total Compra
+              </span>
               <span className="text-3xl font-bold text-blue-600 dark:text-blue-400">S/ {total.toFixed(2)}</span>
            </div>
         </div>

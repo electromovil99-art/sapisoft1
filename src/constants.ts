@@ -39,9 +39,10 @@ export const MOCK_SERVICES: ServiceOrder[] = [
   { id: '514490', entryDate: '13/12/2025', entryTime: '10:30', exitDate: '15/12/2025', exitTime: '16:00', client: 'ALEXANDER GONZALES', deviceModel: 'IPHONE 15 PRO MAX', issue: 'Cambio de Pantalla', status: 'Entregado', technician: 'Isaac Quille', receptionist: 'Admin', cost: 830.00, color: '#10b981', usedProducts: [] }
 ];
 
+// FIX: Added 'category' and 'financialType' to objects and corrected user name to match dashboard logic.
 export const MOCK_CASH_MOVEMENTS: CashMovement[] = [
-  { id: '1', time: '09:23:23', type: 'Ingreso', paymentMethod: 'Efectivo', concept: 'Venta con Ticket Nro. 68031', amount: 6.00, user: 'Jose Luis Gama' },
-  { id: '2', time: '09:38:28', type: 'Egreso', paymentMethod: 'Efectivo', concept: 'Nota de Credito Nro. 7589', amount: 6.00, user: 'Jose Luis Gama' },
+  { id: '1', time: '09:23:23', type: 'Ingreso', paymentMethod: 'Efectivo', concept: 'Venta con Ticket Nro. 68031', amount: 6.00, user: 'Juan Vendedor', category: 'Venta', financialType: 'Variable' },
+  { id: '2', time: '09:38:28', type: 'Egreso', paymentMethod: 'Efectivo', concept: 'Nota de Credito Nro. 7589', amount: 6.00, user: 'Juan Vendedor', category: 'Devoluciones', financialType: 'Variable' },
 ];
 
 const PERU_DATA = [

@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { Search, Plus, Trash2, Edit, Save, X, Package, BarChart, RotateCcw, Filter } from 'lucide-react';
-import { Product, Brand, Category } from '../types';
+
+import React, { useState, useRef } from 'react';
+import { Search, Plus, Trash2, Edit, Save, X, Package, BarChart, RotateCcw, Filter, Upload, FileScan, Download, Share } from 'lucide-react';
+import { Product, Brand, Category, ViewState } from '../types';
 
 interface InventoryProps {
   products: Product[];
@@ -9,12 +10,14 @@ interface InventoryProps {
   onUpdateProduct: (product: Product) => void;
   onAddProduct: (product: Product) => void;
   onDeleteProduct: (id: string) => void;
+  onNavigate: (view: ViewState) => void;
 }
 
-const InventoryModule: React.FC<InventoryProps> = ({ products, brands, categories, onUpdateProduct, onAddProduct, onDeleteProduct }) => {
+const InventoryModule: React.FC<InventoryProps> = ({ products, brands, categories, onUpdateProduct, onAddProduct, onDeleteProduct, onNavigate }) => {
   const [filterText, setFilterText] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [showModal, setShowModal] = useState(false);
+  const excelImportRef = useRef<HTMLInputElement>(null);
   
   // UI States for "Create New" toggles
   const [isNewCategory, setIsNewCategory] = useState(false);
@@ -41,6 +44,34 @@ const InventoryModule: React.FC<InventoryProps> = ({ products, brands, categorie
     if (!newProduct.code || !newProduct.name) return;
     onAddProduct({ ...newProduct, category: newProduct.category || 'GENERAL', id: Math.random().toString() } as Product);
     setShowModal(false);
+  };
+
+  const handleExcelImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    alert(`Simulación: Archivo "${file.name}" seleccionado. Importando 3 productos de ejemplo...`);
+    
+    // Mock products
+    const mockProducts: Product[] = [
+        { id: Math.random().toString(), code: 'EXCEL-001', name: 'CARGADOR IPHONE 20W (Excel)', category: 'ACCESORIOS', price: 65, stock: 15, brand: 'APPLE'},
+        { id: Math.random().toString(), code: 'EXCEL-002', name: 'PROTECTOR PANTALLA S23 (Excel)', category: 'ACCESORIOS', price: 25, stock: 50, brand: 'SAMSUNG'},
+        { id: Math.random().toString(), code: 'EXCEL-003', name: 'AUDIFONOS BLUETOOTH F9 (Excel)', category: 'ACCESORIOS', price: 40, stock: 25, brand: 'GENERICO'},
+    ];
+
+    mockProducts.forEach(p => onAddProduct(p));
+    
+    if(excelImportRef.current) {
+        excelImportRef.current.value = "";
+    }
+  };
+
+  const handleDownloadTemplate = () => {
+    alert("Simulación: Descargando plantilla 'plantilla_inventario.xlsx'.\n\nLa plantilla debe contener las columnas: code, name, category, brand, price, stock, location.");
+  };
+
+  const handleExportData = () => {
+    alert(`Simulación: Exportando ${filteredProducts.length} productos a 'export_inventario.xlsx'.`);
   };
 
   return (
@@ -74,12 +105,35 @@ const InventoryModule: React.FC<InventoryProps> = ({ products, brands, categorie
              </div>
          </div>
 
-         <button 
-           onClick={handleOpenModal} 
-           className="bg-primary-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm shadow-primary-200 dark:shadow-none hover:bg-primary-700 transition-colors flex items-center gap-2"
-         >
-            <Plus size={16}/> Nuevo Producto
-         </button>
+        <div className="flex items-center gap-3">
+            <div className="flex items-center rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 shadow-sm">
+                <button onClick={handleDownloadTemplate} className="px-3 py-2 text-slate-600 dark:text-slate-300 text-sm font-bold hover:bg-slate-50 dark:hover:bg-slate-600 rounded-l-lg flex items-center gap-2 transition-colors">
+                    <Upload size={16}/> Plantilla
+                </button>
+                <div className="w-px h-full bg-slate-200 dark:bg-slate-600"></div>
+                <button onClick={() => excelImportRef.current?.click()} className="px-3 py-2 text-emerald-600 dark:text-emerald-400 text-sm font-bold hover:bg-emerald-50 dark:hover:bg-slate-600 flex items-center gap-2 transition-colors">
+                    <Download size={16}/> Importar
+                </button>
+                <div className="w-px h-full bg-slate-200 dark:bg-slate-600"></div>
+                <button onClick={handleExportData} className="px-3 py-2 text-blue-600 dark:text-blue-400 text-sm font-bold hover:bg-blue-50 dark:hover:bg-slate-600 rounded-r-lg flex items-center gap-2 transition-colors">
+                    <Share size={16}/> Exportar
+                </button>
+            </div>
+            <input type="file" ref={excelImportRef} onChange={handleExcelImport} className="hidden" accept=".xlsx, .xls, .csv"/>
+            
+            <button 
+                onClick={() => onNavigate(ViewState.INVENTORY_CONTROL)}
+                className="bg-slate-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm hover:bg-slate-700 transition-colors flex items-center gap-2"
+            >
+                <FileScan size={16}/> Toma de Inventario
+            </button>
+             <button 
+               onClick={handleOpenModal} 
+               className="bg-primary-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm shadow-primary-200 dark:shadow-none hover:bg-primary-700 transition-colors flex items-center gap-2"
+             >
+                <Plus size={16}/> Nuevo Producto
+             </button>
+        </div>
       </div>
 
       {/* Modern Grid */}
@@ -94,6 +148,7 @@ const InventoryModule: React.FC<InventoryProps> = ({ products, brands, categorie
                      <th>Marca</th>
                      <th className="text-center">Ubicación</th>
                      <th className="text-right">Stock</th>
+                     <th className="text-right">Costo</th>
                      <th className="text-right">Precio</th>
                      <th className="text-center"></th>
                   </tr>
@@ -103,22 +158,13 @@ const InventoryModule: React.FC<InventoryProps> = ({ products, brands, categorie
                      <tr key={p.id} className="group transition-colors hover:bg-slate-50 dark:hover:bg-slate-700">
                         <td className="font-mono text-slate-500 dark:text-slate-400 text-xs">{p.code}</td>
                         <td className="font-medium text-slate-700 dark:text-white">{p.name}</td>
-                        <td>
-                            <span className="px-2 py-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs rounded-md font-medium">{p.category}</span>
-                        </td>
+                        <td><span className="px-2 py-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs rounded-md font-medium">{p.category}</span></td>
                         <td className="text-slate-500 dark:text-slate-400">{p.brand}</td>
                         <td className="text-center text-slate-500 dark:text-slate-400">{p.location || '-'}</td>
-                        <td className="text-right">
-                            <span className={`font-bold px-2 py-1 rounded-md text-xs ${p.stock < 5 ? 'bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400' : 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400'}`}>
-                                {p.stock} un.
-                            </span>
-                        </td>
+                        <td className="text-right"><span className={`font-bold px-2 py-1 rounded-md text-xs ${p.stock < 5 ? 'bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400' : 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400'}`}>{p.stock} un.</span></td>
+                        <td className="text-right text-slate-500 dark:text-slate-400">S/ {p.cost?.toFixed(2) || '0.00'}</td>
                         <td className="text-right font-bold text-slate-800 dark:text-white">S/ {p.price.toFixed(2)}</td>
-                        <td className="text-center">
-                            <button onClick={() => onDeleteProduct(p.id)} className="text-slate-300 hover:text-red-500 transition-colors p-2">
-                                <Trash2 size={16}/>
-                            </button>
-                        </td>
+                        <td className="text-center"><button onClick={() => onDeleteProduct(p.id)} className="text-slate-300 hover:text-red-500 transition-colors p-2"><Trash2 size={16}/></button></td>
                      </tr>
                   ))}
                </tbody>
@@ -144,31 +190,11 @@ const InventoryModule: React.FC<InventoryProps> = ({ products, brands, categorie
                             <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Marca</label>
                             <div className="flex gap-2">
                                 {isNewBrand ? (
-                                    <input 
-                                        type="text" 
-                                        className="w-full p-2 border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg uppercase focus:border-primary-500 outline-none animate-in fade-in slide-in-from-left-2" 
-                                        value={newProduct.brand} 
-                                        onChange={e => setNewProduct({...newProduct, brand: e.target.value})} 
-                                        placeholder="Nueva Marca"
-                                        autoFocus
-                                    />
+                                    <input type="text" className="w-full p-2 border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg uppercase focus:border-primary-500 outline-none animate-in fade-in slide-in-from-left-2" value={newProduct.brand} onChange={e => setNewProduct({...newProduct, brand: e.target.value})} placeholder="Nueva Marca" autoFocus />
                                 ) : (
-                                    <select 
-                                        className="w-full p-2 border border-slate-200 dark:border-slate-600 rounded-lg uppercase bg-white dark:bg-slate-700 text-slate-700 dark:text-white outline-none" 
-                                        value={newProduct.brand} 
-                                        onChange={e => setNewProduct({...newProduct, brand: e.target.value})}
-                                    >
-                                        <option value="">-- Seleccionar --</option>
-                                        {brands.map(b => <option key={b.id} value={b.name}>{b.name}</option>)}
-                                    </select>
+                                    <select className="w-full p-2 border border-slate-200 dark:border-slate-600 rounded-lg uppercase bg-white dark:bg-slate-700 text-slate-700 dark:text-white outline-none" value={newProduct.brand} onChange={e => setNewProduct({...newProduct, brand: e.target.value})}><option value="">-- Seleccionar --</option>{brands.map(b => <option key={b.id} value={b.name}>{b.name}</option>)}</select>
                                 )}
-                                <button 
-                                    onClick={() => { setIsNewBrand(!isNewBrand); setNewProduct({...newProduct, brand: ''}) }} 
-                                    className={`p-2 rounded-lg border transition-colors ${isNewBrand ? 'bg-slate-100 dark:bg-slate-700 text-slate-500 hover:text-red-500' : 'bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-primary-900/50'}`}
-                                    title={isNewBrand ? "Volver a lista" : "Crear nueva marca"}
-                                >
-                                    {isNewBrand ? <RotateCcw size={18}/> : <Plus size={18}/>}
-                                </button>
+                                <button onClick={() => { setIsNewBrand(!isNewBrand); setNewProduct({...newProduct, brand: ''}) }} className={`p-2 rounded-lg border transition-colors ${isNewBrand ? 'bg-slate-100 dark:bg-slate-700 text-slate-500 hover:text-red-500' : 'bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-primary-900/50'}`} title={isNewBrand ? "Volver a lista" : "Crear nueva marca"}>{isNewBrand ? <RotateCcw size={18}/> : <Plus size={18}/>}</button>
                             </div>
                         </div>
                     </div>
@@ -182,31 +208,11 @@ const InventoryModule: React.FC<InventoryProps> = ({ products, brands, categorie
                             <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Categoría</label>
                             <div className="flex gap-2">
                                 {isNewCategory ? (
-                                    <input 
-                                        type="text" 
-                                        className="w-full p-2 border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg uppercase focus:border-primary-500 outline-none animate-in fade-in slide-in-from-left-2" 
-                                        value={newProduct.category} 
-                                        onChange={e => setNewProduct({...newProduct, category: e.target.value})} 
-                                        placeholder="Nueva Categoría"
-                                        autoFocus
-                                    />
+                                    <input type="text" className="w-full p-2 border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg uppercase focus:border-primary-500 outline-none animate-in fade-in slide-in-from-left-2" value={newProduct.category} onChange={e => setNewProduct({...newProduct, category: e.target.value})} placeholder="Nueva Categoría" autoFocus />
                                 ) : (
-                                    <select 
-                                        className="w-full p-2 border border-slate-200 dark:border-slate-600 rounded-lg uppercase bg-white dark:bg-slate-700 text-slate-700 dark:text-white outline-none" 
-                                        value={newProduct.category} 
-                                        onChange={e => setNewProduct({...newProduct, category: e.target.value})}
-                                    >
-                                        <option value="">-- Seleccionar --</option>
-                                        {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
-                                    </select>
+                                    <select className="w-full p-2 border border-slate-200 dark:border-slate-600 rounded-lg uppercase bg-white dark:bg-slate-700 text-slate-700 dark:text-white outline-none" value={newProduct.category} onChange={e => setNewProduct({...newProduct, category: e.target.value})}><option value="">-- Seleccionar --</option>{categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}</select>
                                 )}
-                                <button 
-                                    onClick={() => { setIsNewCategory(!isNewCategory); setNewProduct({...newProduct, category: ''}) }} 
-                                    className={`p-2 rounded-lg border transition-colors ${isNewCategory ? 'bg-slate-100 dark:bg-slate-700 text-slate-500 hover:text-red-500' : 'bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-primary-900/50'}`}
-                                    title={isNewCategory ? "Volver a lista" : "Crear nueva categoría"}
-                                >
-                                    {isNewCategory ? <RotateCcw size={18}/> : <Plus size={18}/>}
-                                </button>
+                                <button onClick={() => { setIsNewCategory(!isNewCategory); setNewProduct({...newProduct, category: ''}) }} className={`p-2 rounded-lg border transition-colors ${isNewCategory ? 'bg-slate-100 dark:bg-slate-700 text-slate-500 hover:text-red-500' : 'bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-primary-900/50'}`} title={isNewCategory ? "Volver a lista" : "Crear nueva categoría"}>{isNewCategory ? <RotateCcw size={18}/> : <Plus size={18}/>}</button>
                             </div>
                         </div>
                         <div className="space-y-1">
@@ -215,10 +221,14 @@ const InventoryModule: React.FC<InventoryProps> = ({ products, brands, categorie
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-3 gap-4">
                         <div className="space-y-1">
                             <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Stock</label>
                             <input type="number" className="w-full p-2 border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg" value={newProduct.stock} onChange={e => setNewProduct({...newProduct, stock: Number(e.target.value)})} placeholder="0"/>
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Costo (S/)</label>
+                            <input type="number" className="w-full p-2 border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg" value={newProduct.cost} onChange={e => setNewProduct({...newProduct, cost: Number(e.target.value)})} placeholder="0.00"/>
                         </div>
                         <div className="space-y-1">
                             <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Precio (S/)</label>

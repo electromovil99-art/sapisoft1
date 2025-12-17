@@ -10,7 +10,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, session }) => {
   const userName = session?.user.fullName || 'Usuario';
   const dailyGoal = 1500.00;
   const stats = useMemo(() => {
-      const mySalesToday = MOCK_CASH_MOVEMENTS.filter(m => m.type === 'Ingreso' && m.user.includes(userName.split(' ')[0]) && m.category?.includes('Venta')).reduce((acc, m) => acc + m.amount, 0);
+      // FIX: Changed user filter from fragile '.includes' to strict '===' for accuracy.
+      const mySalesToday = MOCK_CASH_MOVEMENTS.filter(m => m.type === 'Ingreso' && m.user === userName && m.category?.includes('Venta')).reduce((acc, m) => acc + m.amount, 0);
       const storeSalesToday = MOCK_CASH_MOVEMENTS.filter(m => m.type === 'Ingreso' && m.category?.includes('Venta')).reduce((acc, m) => acc + m.amount, 0);
       const myReceivables = MOCK_CLIENTS.reduce((acc, c) => acc + (c.creditUsed || 0), 0);
       return { mySalesToday, storeSalesToday, myReceivables };

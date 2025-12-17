@@ -5,7 +5,7 @@ import {
   LayoutDashboard, ShoppingCart, Package, Wrench, 
   Wallet, Users, Activity, ShoppingBag, FolderCog, FileSearch, Truck, Landmark, BrainCircuit, Moon, Sun,
   LogOut, Search, Bell, TrendingDown, TrendingUp, Printer, Shield, FileMinus, CreditCard, ChevronRight, Menu, Map, MessageCircle, Globe,
-  Database, Settings, BarChart3, ClipboardList
+  Database, Settings, BarChart3, ClipboardList, Cloud, CloudOff, FileScan, FileBarChart, PieChart
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -16,15 +16,11 @@ interface LayoutProps {
   toggleTheme: () => void;
   session?: AuthSession; 
   onLogout?: () => void; 
+  isSyncEnabled: boolean; // NEW
+  toggleSyncMode: () => void; // NEW
 }
 
 const NAV_STRUCTURE = [
-  {
-    id: 'dashboard',
-    label: 'Dashboard',
-    icon: LayoutDashboard,
-    views: [ViewState.DASHBOARD]
-  },
   {
     id: 'comercial',
     label: 'Comercial',
@@ -44,6 +40,7 @@ const NAV_STRUCTURE = [
     icon: Package,
     items: [
       { view: ViewState.INVENTORY, label: 'Inventario', icon: Package },
+      { view: ViewState.INVENTORY_CONTROL, label: 'Toma de Inventario', icon: FileScan },
       { view: ViewState.PURCHASES, label: 'Compras', icon: ShoppingBag },
       { view: ViewState.SUPPLIERS, label: 'Proveedores', icon: Truck },
       { view: ViewState.MANAGE_RESOURCES, label: 'Marcas y Cat.', icon: FolderCog },
@@ -67,9 +64,21 @@ const NAV_STRUCTURE = [
     label: 'Reportes',
     icon: BarChart3,
     items: [
+      { view: ViewState.SALES_REPORT, label: 'Ventas', icon: TrendingUp },
+      { view: ViewState.PROFIT_REPORT, label: 'Utilidades', icon: PieChart },
+      { view: ViewState.INVENTORY_REPORT, label: 'Inventario', icon: FileBarChart },
       { view: ViewState.BUSINESS_EVOLUTION, label: 'Evolución', icon: Activity },
       { view: ViewState.FINANCIAL_STRATEGY, label: 'Estrategia IA', icon: BrainCircuit },
-      { view: ViewState.HISTORY_QUERIES, label: 'Historial', icon: FileSearch },
+    ]
+  },
+  {
+    id: 'consultas',
+    label: 'Consultas',
+    icon: FileSearch,
+    items: [
+      { view: ViewState.HISTORY_QUERIES, label: 'Consulta Ventas', icon: ShoppingCart },
+      { view: ViewState.PURCHASES_HISTORY, label: 'Consulta Compras', icon: ShoppingBag },
+      { view: ViewState.KARDEX_HISTORY, label: 'Movimientos (Kardex)', icon: Package }
     ]
   },
   {
@@ -84,18 +93,19 @@ const NAV_STRUCTURE = [
   }
 ];
 
-const Layout: React.FC<LayoutProps> = ({ children, currentView, onNavigate, isDarkMode, toggleTheme, session, onLogout }) => {
+const Layout: React.FC<LayoutProps> = ({ children, currentView, onNavigate, isDarkMode, toggleTheme, session, onLogout, isSyncEnabled, toggleSyncMode }) => {
   
   const isSuperAdmin = session?.user.role === 'SUPER_ADMIN';
 
   const activeCategory = useMemo(() => {
+    if (currentView === ViewState.DASHBOARD) return null;
     return NAV_STRUCTURE.find(cat => 
-      cat.views?.includes(currentView) || cat.items?.some(item => item.view === currentView)
+      cat.items?.some(item => item.view === currentView)
     );
   }, [currentView]);
 
   return (
-    <div className={`flex flex-col h-screen w-screen bg-[#f8fafc] dark:bg-[#020617] overflow-hidden transition-colors duration-300 font-sans`}>
+    <div className={`flex flex-col h-screen w-full bg-[#f8fafc] dark:bg-[#020617] overflow-hidden transition-colors duration-300 font-sans`}>
       
       {/* 1. TOP HEADER */}
       <header className={`
@@ -111,7 +121,7 @@ const Layout: React.FC<LayoutProps> = ({ children, currentView, onNavigate, isDa
          <div className="max-w-[1920px] mx-auto px-4 h-16 flex items-center justify-between relative z-10">
             
             {/* Logo Section */}
-            <div className="flex items-center gap-3 pr-6">
+            <button onClick={() => onNavigate(ViewState.DASHBOARD)} className="flex items-center gap-3 pr-6 text-left">
                 <div className="w-9 h-9 bg-white/10 rounded-xl flex items-center justify-center shadow-inner ring-1 ring-white/20 backdrop-blur-md">
                    <span className="text-white font-black text-lg tracking-tight drop-shadow-md">S</span>
                 </div>
@@ -122,7 +132,7 @@ const Layout: React.FC<LayoutProps> = ({ children, currentView, onNavigate, isDa
                       <p className="text-[9px] text-white/80 font-medium tracking-widest uppercase">{isSuperAdmin ? 'MASTER ADMIN' : 'CLOUD ERP'}</p>
                    </div>
                 </div>
-            </div>
+            </button>
 
             {/* Navigation - Glassmorphism Style */}
             {!isSuperAdmin && (
@@ -132,8 +142,7 @@ const Layout: React.FC<LayoutProps> = ({ children, currentView, onNavigate, isDa
                         const Icon = cat.icon;
                         
                         const handleClick = () => {
-                            if (cat.views) onNavigate(cat.views[0]);
-                            else if (cat.items) onNavigate(cat.items[0].view);
+                            if (cat.items) onNavigate(cat.items[0].view);
                         };
 
                         return (
@@ -142,7 +151,7 @@ const Layout: React.FC<LayoutProps> = ({ children, currentView, onNavigate, isDa
                                 onClick={handleClick}
                                 className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-300 relative group
                                     ${isActive 
-                                        ? 'bg-white text-primary-700 shadow-md transform scale-105' 
+                                        ? 'bg-white text-primary-700 dark:bg-slate-100 dark:text-primary-600 shadow-md transform scale-105' 
                                         : 'text-white/80 hover:text-white hover:bg-white/10'
                                     }
                                 `}
@@ -164,14 +173,19 @@ const Layout: React.FC<LayoutProps> = ({ children, currentView, onNavigate, isDa
             {/* Right Actions */}
             <div className="flex items-center gap-3 ml-auto pl-2">
                {!isSuperAdmin && (
-                   <div className="relative hidden xl:block group mr-2">
-                      <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/60 group-focus-within:text-white transition-colors"/>
-                      <input 
-                        type="text" 
-                        placeholder="Buscar ticket, cliente..." 
-                        className="pl-9 pr-4 py-1.5 bg-white/10 border border-white/10 rounded-full text-xs w-56 focus:w-64 focus:bg-white/20 focus:ring-2 focus:ring-white/20 transition-all text-white placeholder-white/60 outline-none backdrop-blur-sm"
-                      />
-                   </div>
+                   <button 
+                      onClick={toggleSyncMode}
+                      title={isSyncEnabled ? "Sincronización con la Nube ACTIVADA" : "Sincronización con la Nube DESACTIVADA"}
+                      className={`hidden xl:flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all duration-300 border backdrop-blur-sm
+                          ${isSyncEnabled 
+                              ? 'bg-emerald-500/80 text-white border-emerald-400/50' 
+                              : 'bg-white/10 text-white/70 hover:text-white border-white/10'
+                          }
+                      `}
+                   >
+                       {isSyncEnabled ? <Cloud size={14}/> : <CloudOff size={14}/>}
+                       Sinc. Nube
+                   </button>
                )}
                
                <div className="flex items-center gap-1 bg-white/10 rounded-full p-1 border border-white/10 backdrop-blur-sm">

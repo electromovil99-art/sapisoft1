@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Search, UserPlus, Filter, Star, CreditCard, ShoppingBag, TrendingUp, AlertTriangle, ShieldCheck, DollarSign, Wallet, MessageCircle } from 'lucide-react';
 import { Client } from '../types';

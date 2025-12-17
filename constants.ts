@@ -3,10 +3,10 @@ import { Product, Client, ServiceOrder, CashMovement, GeoLocation, Category } fr
 
 // --- DATA SET 1: TECHNOLOGY (CELULARES) ---
 export const TECH_PRODUCTS: Product[] = [
-  { id: '1', code: '102136773', name: 'LCD+T. S7 EDGE DORADO C/M ORIG.', category: 'PANTALLAS', price: 320.00, stock: 5, location: 'LT11-F', brand: 'SAMSUNG' },
-  { id: '2', code: '102586458', name: 'BATERIA IPHONE X ORIGINAL', category: 'BATERIAS', price: 85.00, stock: 12, location: 'BAT-01', brand: 'APPLE' },
-  { id: '3', code: '102256745', name: 'PIN DE CARGA TIPO C GENERICA', category: 'REPUESTOS', price: 15.00, stock: 50, location: 'CAJ-22', brand: 'GENERICO' },
-  { id: '4', code: '102266765', name: 'MICA DE VIDRIO 9D REDMI NOTE 10', category: 'ACCESORIOS', price: 20.00, stock: 30, location: 'EX-01', brand: 'XIAOMI' },
+  { id: '1', code: '102136773', name: 'LCD+T. S7 EDGE DORADO C/M ORIG.', category: 'PANTALLAS', price: 320.00, cost: 250.00, stock: 5, location: 'LT11-F', brand: 'SAMSUNG' },
+  { id: '2', code: '102586458', name: 'BATERIA IPHONE X ORIGINAL', category: 'BATERIAS', price: 85.00, cost: 60.00, stock: 12, location: 'BAT-01', brand: 'APPLE' },
+  { id: '3', code: '102256745', name: 'PIN DE CARGA TIPO C GENERICA', category: 'REPUESTOS', price: 15.00, cost: 7.00, stock: 50, location: 'CAJ-22', brand: 'GENERICO' },
+  { id: '4', code: '102266765', name: 'MICA DE VIDRIO 9D REDMI NOTE 10', category: 'ACCESORIOS', price: 20.00, cost: 5.00, stock: 30, location: 'EX-01', brand: 'XIAOMI' },
 ];
 
 export const TECH_CATEGORIES: Category[] = [
@@ -19,11 +19,11 @@ export const TECH_CATEGORIES: Category[] = [
 
 // --- DATA SET 2: PHARMACY (FARMACIA) ---
 export const PHARMA_PRODUCTS: Product[] = [
-  { id: '101', code: 'FAR-001', name: 'PARACETAMOL 500MG X 100', category: 'GENERICOS', price: 8.00, stock: 200, location: 'EST-A1', brand: 'GENFAR' },
-  { id: '102', code: 'FAR-002', name: 'AMOXICILINA 500MG', category: 'ANTIBIOTICOS', price: 1.50, stock: 150, location: 'EST-B2', brand: 'PORTUGAL' },
-  { id: '103', code: 'FAR-003', name: 'APRONAX 550MG (CAJA)', category: 'ANTIINFLAMATORIOS', price: 25.00, stock: 40, location: 'VIT-01', brand: 'BAYER' },
-  { id: '104', code: 'FAR-004', name: 'ENSURE ADVANCE VAINILLA', category: 'NUTRICION', price: 110.00, stock: 15, location: 'GOND-3', brand: 'ABBOTT' },
-  { id: '105', code: 'FAR-005', name: 'PAÑALES HUGGIES TALLA G', category: 'CUIDADO PERSONAL', price: 45.00, stock: 30, location: 'ALM-2', brand: 'HUGGIES' },
+  { id: '101', code: 'FAR-001', name: 'PARACETAMOL 500MG X 100', category: 'GENERICOS', price: 8.00, cost: 4.50, stock: 200, location: 'EST-A1', brand: 'GENFAR' },
+  { id: '102', code: 'FAR-002', name: 'AMOXICILINA 500MG', category: 'ANTIBIOTICOS', price: 1.50, cost: 0.80, stock: 150, location: 'EST-B2', brand: 'PORTUGAL' },
+  { id: '103', code: 'FAR-003', name: 'APRONAX 550MG (CAJA)', category: 'ANTIINFLAMATORIOS', price: 25.00, cost: 18.00, stock: 40, location: 'VIT-01', brand: 'BAYER' },
+  { id: '104', code: 'FAR-004', name: 'ENSURE ADVANCE VAINILLA', category: 'NUTRICION', price: 110.00, cost: 95.00, stock: 15, location: 'GOND-3', brand: 'ABBOTT' },
+  { id: '105', code: 'FAR-005', name: 'PAÑALES HUGGIES TALLA G', category: 'CUIDADO PERSONAL', price: 45.00, cost: 35.00, stock: 30, location: 'ALM-2', brand: 'HUGGIES' },
 ];
 
 export const PHARMA_CATEGORIES: Category[] = [
@@ -33,6 +33,11 @@ export const PHARMA_CATEGORIES: Category[] = [
     { id: '4', name: 'NUTRICION' },
     { id: '5', name: 'ANTIBIOTICOS' },
 ];
+
+// --- FIXED CATEGORIES ---
+export const FIXED_EXPENSE_CATEGORIES: string[] = ['Alquiler de Local', 'Sueldos Personal', 'Internet / Teléfono', 'Luz / Agua', 'Software / Hosting', 'Pago Préstamo Banco', 'Contador / Legal'];
+export const FIXED_INCOME_CATEGORIES: string[] = ['Membresías', 'Alquiler Subarriendo', 'Contratos Servicio Mensual'];
+
 
 // --- SHARED MOCK DATA ---
 export const MOCK_CLIENTS: Client[] = [
@@ -60,8 +65,9 @@ export const MOCK_SERVICES: ServiceOrder[] = [
 ];
 
 export const MOCK_CASH_MOVEMENTS: CashMovement[] = [
-  { id: '1', time: '09:23:23', type: 'Ingreso', paymentMethod: 'Efectivo', concept: 'Venta con Ticket Nro. 68031', amount: 6.00, user: 'Jose Luis Gama' },
-  { id: '2', time: '09:38:28', type: 'Egreso', paymentMethod: 'Efectivo', concept: 'Nota de Credito Nro. 7589', amount: 6.00, user: 'Jose Luis Gama' },
+  { id: '1', time: '09:23:23', type: 'Ingreso', paymentMethod: 'Efectivo', concept: 'Venta con Ticket Nro. 68031', amount: 6.00, user: 'Jose Luis Gama', category: 'Venta', financialType: 'Variable' },
+  { id: '2', time: '09:38:28', type: 'Egreso', paymentMethod: 'Efectivo', concept: 'Nota de Credito Nro. 7589', amount: 6.00, user: 'Jose Luis Gama', category: 'Devoluciones', financialType: 'Variable' },
+  { id: '3', time: '10:00:00', type: 'Egreso', paymentMethod: 'Yape', concept: 'Pago de Alquiler', amount: 500.00, user: 'Admin', category: 'Alquiler de Local', financialType: 'Fijo' },
 ];
 
 // --- GENERACION DE UBIGEO PERU (Departamentos y Provincias) ---

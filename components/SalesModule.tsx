@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, Trash2, CreditCard, Banknote, UserPlus, FileText, Printer, Plus, Minus, X, Check, ShoppingCart, User, Smartphone, Receipt, QrCode, Landmark, CheckCircle, Edit3, Lock, ShieldAlert, MapPin, Filter, History, AlertTriangle, ArrowRight, Wallet, RotateCcw, ClipboardList, Upload } from 'lucide-react';
+import { Search, Trash2, CreditCard, Banknote, UserPlus, FileText, Printer, Plus, Minus, X, Check, ShoppingCart, User, Smartphone, Receipt, QrCode, Landmark, CheckCircle, Edit3, Lock, ShieldAlert, MapPin, Filter, History, AlertTriangle, ArrowRight, Wallet, RotateCcw, ClipboardList, Upload, DollarSign } from 'lucide-react';
 import { Product, CartItem, Client, PaymentBreakdown, Category, PurchaseRecord, BankAccount, PaymentMethodType, GeoLocation, Quotation } from '../types';
 
 interface SalesModuleProps {
@@ -347,9 +347,9 @@ const SalesModule: React.FC<SalesModuleProps> = ({ products, clients, categories
   };
 
   return (
-    <div className="flex h-[calc(100vh-100px)] gap-6">
+    <div className="flex h-full gap-6">
       
-      {/* LEFT: Product & Cart Section ... (Unchanged logic for filtering) ... */}
+      {/* LEFT: Product & Cart Section */}
       <div className="flex-1 flex flex-col gap-4 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
         
         {/* Header / Search */}
@@ -491,7 +491,7 @@ const SalesModule: React.FC<SalesModuleProps> = ({ products, clients, categories
               <span className="font-medium text-slate-700 dark:text-slate-300">S/ {(total - (total / 1.18)).toFixed(2)}</span>
            </div>
            <div className="flex justify-between items-center">
-              <span className="text-xl font-bold text-slate-800 dark:text-white">Total a Pagar</span>
+              <span className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2"><DollarSign size={20}/>Total a Pagar</span>
               <span className="text-3xl font-bold text-primary-600 dark:text-primary-400">S/ {total.toFixed(2)}</span>
            </div>
         </div>
@@ -499,15 +499,14 @@ const SalesModule: React.FC<SalesModuleProps> = ({ products, clients, categories
       
       {/* RIGHT: Controls & Checkout */}
       <div className="w-80 flex flex-col gap-4 shrink-0">
-         {/* Client Selector (Now with Search) */}
+         {/* Client Selector */}
          <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
-            <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-2 block">Cliente</label>
+            <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-2 block flex items-center gap-1.5"><User size={14}/>Cliente</label>
             <div className="flex gap-2 mb-3">
                <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center text-primary-600 dark:text-primary-400 shrink-0">
                   <User size={20}/>
                </div>
                <div className="min-w-0 flex-1 relative">
-                  {/* Searchable Input for Clients */}
                   <input 
                     list="client-suggestions"
                     className="w-full bg-transparent font-bold text-slate-700 dark:text-white outline-none border-b border-slate-200 dark:border-slate-700 focus:border-primary-500 text-sm py-1"
@@ -533,9 +532,9 @@ const SalesModule: React.FC<SalesModuleProps> = ({ products, clients, categories
             </button>
          </div>
 
-         {/* ... Rest of Right Column ... */}
+         {/* Document Selector */}
          <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 flex flex-col gap-3">
-             <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase">Documento</label>
+             <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase flex items-center gap-1.5"><FileText size={14}/>Documento</label>
              <div className="relative">
                  <FileText className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18}/>
                  <select 
@@ -611,7 +610,6 @@ const SalesModule: React.FC<SalesModuleProps> = ({ products, clients, categories
       {/* --- PAYMENT MODAL --- */}
       {showPaymentModal && (
         <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-50 flex items-center justify-center p-4">
-           {/* ... Payment Modal Content ... */}
            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-[850px] overflow-hidden flex flex-col max-h-[95vh] border border-slate-300 dark:border-slate-700 animate-in fade-in zoom-in-95">
               <div className="px-6 py-4 flex justify-between items-center border-b border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800">
                  <h3 className="font-bold text-lg text-slate-800 dark:text-white flex items-center gap-2">
@@ -663,7 +661,6 @@ const SalesModule: React.FC<SalesModuleProps> = ({ products, clients, categories
                                <button onClick={() => setCurrentPayment({...currentPayment, method: 'Saldo Favor', reference: '', accountId: ''})} className={`py-2 px-1 rounded-lg text-xs font-bold transition-all border flex items-center justify-center gap-1 ${currentPayment.method === 'Saldo Favor' ? 'bg-emerald-600 text-white border-emerald-600' : 'text-slate-600 border-slate-200 hover:bg-slate-50'}`}><Wallet size={12}/> Saldo Favor</button>
                            </div></div>
                            
-                           {/* Saldo Warning */}
                            {currentPayment.method === 'Saldo Favor' && (
                                <div className="bg-emerald-50 dark:bg-emerald-900/20 p-3 rounded-lg border border-emerald-100 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 text-xs">
                                    <div className="font-bold flex justify-between"><span>Saldo Disponible:</span> <span>S/ {client?.digitalBalance.toFixed(2)}</span></div>
@@ -682,7 +679,6 @@ const SalesModule: React.FC<SalesModuleProps> = ({ products, clients, categories
         </div>
       )}
       
-      {/* ... Auth and Cost Modals (Unchanged) ... */}
       {showAuthModal && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
             <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-xl w-[350px] animate-in fade-in zoom-in-95 border border-slate-200 dark:border-slate-700">
@@ -707,7 +703,6 @@ const SalesModule: React.FC<SalesModuleProps> = ({ products, clients, categories
                             <span>Producto:</span>
                             <span className="font-bold text-slate-700 dark:text-white">{priceEditItem?.code}</span>
                         </div>
-                        {/* Original Price Info */}
                         <div className="bg-slate-50 dark:bg-slate-700 p-2 rounded-lg text-xs flex justify-between items-center text-slate-500 dark:text-slate-300">
                             <span>Precio Lista: <strong className="text-slate-700 dark:text-white">S/ {products.find(p => p.id === priceEditItem?.id)?.price.toFixed(2)}</strong></span>
                             <span>Actual: <strong className="text-blue-600 dark:text-blue-400">S/ {priceEditItem?.price.toFixed(2)}</strong></span>
@@ -837,7 +832,6 @@ const SalesModule: React.FC<SalesModuleProps> = ({ products, clients, categories
                       />
                   </div>
                   
-                  {/* Location Selectors */}
                   <div className="grid grid-cols-3 gap-3 p-3 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-100 dark:border-slate-700">
                       <div className="space-y-1">
                           <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Departamento</label>
@@ -890,7 +884,6 @@ const SalesModule: React.FC<SalesModuleProps> = ({ products, clients, categories
         </div>
       )}
 
-      {/* Ticket Modal logic remains same ... */}
       {showTicket && ticketData && (
            <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[80] flex items-center justify-center p-4">
                 <div className="bg-zinc-100 p-2 shadow-2xl rounded-lg animate-in fade-in zoom-in-95">
@@ -930,7 +923,6 @@ const SalesModule: React.FC<SalesModuleProps> = ({ products, clients, categories
                                      </div>
                                  ))
                              ) : (
-                                 // Fallback for legacy
                                  Object.entries(ticketData.payments).map(([key, val]) => 
                                      Number(val) > 0 && <div key={key} className="flex justify-between uppercase"><span>{key}:</span><span>S/ {Number(val).toFixed(2)}</span></div>
                                  )
@@ -940,7 +932,8 @@ const SalesModule: React.FC<SalesModuleProps> = ({ products, clients, categories
                         <div className="text-center text-[10px] text-slate-500 mt-4"><p>¡GRACIAS POR SU PREFERENCIA!</p></div>
                     </div>
                     <div className="flex gap-2 mt-2">
-                        <button onClick={() => setShowTicket(false)} className="flex-1 py-3 bg-slate-200 text-slate-700 font-bold rounded hover:bg-slate-300 text-xs">Cerrar</button>
+                        {/* FIX: Clear cart when closing the ticket modal to start a new sale. */}
+                        <button onClick={() => { setShowTicket(false); setCart([]); }} className="flex-1 py-3 bg-slate-200 text-slate-700 font-bold rounded hover:bg-slate-300 text-xs">Cerrar</button>
                         <button onClick={() => window.print()} className="flex-1 py-3 bg-primary-600 text-white font-bold rounded hover:bg-primary-700 text-xs flex items-center justify-center gap-2"><Printer size={14}/> Imprimir</button>
                     </div>
                 </div>

@@ -151,6 +151,7 @@ const App: React.FC = () => {
 
   const handleLogout = () => {
       setSession(null);
+      // FIX: setCurrentView was called without arguments. It should reset to the dashboard view.
       setCurrentView(ViewState.DASHBOARD);
       setProducts([]); 
   };

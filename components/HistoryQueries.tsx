@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Search, Calendar, FileText, ArrowRight, ArrowDownRight, ArrowUpRight, Package, ShoppingCart, ShoppingBag, Eye, X } from 'lucide-react';
 import { SaleRecord, PurchaseRecord, StockMovement } from '../types';
@@ -6,12 +7,23 @@ interface HistoryQueriesProps {
     salesHistory: SaleRecord[];
     purchasesHistory: PurchaseRecord[];
     stockMovements: StockMovement[];
+    initialTab: 'ventas' | 'compras' | 'kardex';
 }
 
-const HistoryQueries: React.FC<HistoryQueriesProps> = ({ salesHistory, purchasesHistory, stockMovements }) => {
-    const [activeTab, setActiveTab] = useState<'ventas' | 'compras' | 'kardex'>('ventas');
+const HistoryQueries: React.FC<HistoryQueriesProps> = ({ salesHistory, purchasesHistory, stockMovements, initialTab }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedDetail, setSelectedDetail] = useState<any>(null);
+
+    const activeTab = initialTab;
+
+    const getTitle = () => {
+        switch(activeTab){
+            case 'ventas': return { title: "Consulta de Ventas", icon: ShoppingCart, color: "emerald" };
+            case 'compras': return { title: "Consulta de Compras", icon: ShoppingBag, color: "blue" };
+            case 'kardex': return { title: "Movimientos (Kardex)", icon: Package, color: "slate" };
+        }
+    }
+    const { title, icon: Icon, color } = getTitle();
 
     // Filtering
     const getFilteredList = () => {
@@ -40,19 +52,11 @@ const HistoryQueries: React.FC<HistoryQueriesProps> = ({ salesHistory, purchases
     return (
         <div className="flex flex-col h-full gap-6">
             
-            {/* Header Tabs */}
+            {/* Header */}
             <div className="flex justify-between items-center bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
-                <div className="flex gap-2">
-                    <button onClick={() => setActiveTab('ventas')} className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all ${activeTab === 'ventas' ? 'bg-emerald-600 text-white shadow' : 'text-slate-500 dark:text-slate-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/30'}`}>
-                        <ShoppingCart size={18}/> Consulta Ventas
-                    </button>
-                    <button onClick={() => setActiveTab('compras')} className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all ${activeTab === 'compras' ? 'bg-blue-600 text-white shadow' : 'text-slate-500 dark:text-slate-400 hover:bg-blue-50 dark:hover:bg-blue-900/30'}`}>
-                        <ShoppingBag size={18}/> Consulta Compras
-                    </button>
-                    <button onClick={() => setActiveTab('kardex')} className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all ${activeTab === 'kardex' ? 'bg-slate-700 text-white shadow' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'}`}>
-                        <Package size={18}/> Movimientos (Kardex)
-                    </button>
-                </div>
+                <h2 className={`font-bold text-lg text-${color}-600 dark:text-${color}-400 flex items-center gap-3`}>
+                    <Icon size={22}/> {title}
+                </h2>
                 <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16}/>
                     <input 

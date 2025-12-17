@@ -1,5 +1,4 @@
 
-
 import React, { useState, useEffect, useRef } from 'react';
 import Layout from './components/Layout';
 import Dashboard from './components/Dashboard';
@@ -26,11 +25,17 @@ import WhatsAppModule from './components/WhatsAppModule'; // Import
 import CashModule from './components/CashModule';
 import DatabaseModule from './components/DatabaseModule';
 import QuotationModule from './components/QuotationModule';
+import InventoryControlModule from './components/InventoryControlModule';
+import InventoryReportModule from './components/InventoryReportModule';
+import SalesReportModule from './components/SalesReportModule';
+import ProfitReportModule from './components/ProfitReportModule';
+
 
 import { 
     ViewState, CashMovement, Product, ServiceOrder, Client, CartItem, PaymentMethodType, 
     PaymentBreakdown, Supplier, Brand, Category, BankAccount, 
-    SaleRecord, PurchaseRecord, StockMovement, GeoLocation, Chat, SystemUser, AuthSession, Tenant, Quotation
+    SaleRecord, PurchaseRecord, StockMovement, GeoLocation, Chat, SystemUser, AuthSession, Tenant, Quotation,
+    InventoryCountItem
 } from './types';
 import { 
     MOCK_CASH_MOVEMENTS, 
@@ -40,7 +45,9 @@ import {
     TECH_PRODUCTS, 
     TECH_CATEGORIES, 
     PHARMA_PRODUCTS, 
-    PHARMA_CATEGORIES 
+    PHARMA_CATEGORIES,
+    FIXED_EXPENSE_CATEGORIES,
+    FIXED_INCOME_CATEGORIES
 } from './constants';
 
 const getFutureDate = (days: number) => {
@@ -104,6 +111,7 @@ const App: React.FC = () => {
 
   const [currentView, setCurrentView] = useState<ViewState>(ViewState.DASHBOARD);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isSyncEnabled, setIsSyncEnabled] = useState(false); // NEW: Sync Switch State
 
   // --- GLOBAL DATA STATE ---
   const [products, setProducts] = useState<Product[]>([]);
@@ -126,6 +134,13 @@ const App: React.FC = () => {
   const [posClient, setPosClient] = useState<Client | null>(null);
   const [quotations, setQuotations] = useState<Quotation[]>([]);
   
+  // --- INVENTORY CONTROL STATE ---
+  const [inventoryCount, setInventoryCount] = useState<InventoryCountItem[]>([]);
+
+  // --- FINANCE MANAGER STATE ---
+  const [fixedExpenseCategories, setFixedExpenseCategories] = useState<string[]>(FIXED_EXPENSE_CATEGORIES);
+  const [fixedIncomeCategories, setFixedIncomeCategories] = useState<string[]>(FIXED_INCOME_CATEGORIES);
+
   // Initialize default client for POS
   useEffect(() => {
     if (clients.length > 0 && !posClient) {
@@ -160,6 +175,8 @@ const App: React.FC = () => {
       else document.documentElement.classList.add('dark');
   };
 
+  const toggleSyncMode = () => setIsSyncEnabled(prev => !prev);
+
   const handleLogin = (user: SystemUser) => {
       if (user.role === 'SUPER_ADMIN') {
           setSession({ user, businessName: 'PANEL MAESTRO', token: 'master-token' });
@@ -186,8 +203,8 @@ const App: React.FC = () => {
   };
 
   const handleLogout = () => {
-      // FIX: The `setSession` function requires an argument. Pass `null` to clear the session.
       setSession(null);
+      // FIX: setCurrentView was called without arguments. It should reset to the dashboard view.
       setCurrentView(ViewState.DASHBOARD);
       setProducts([]); 
   };
@@ -197,6 +214,101 @@ const App: React.FC = () => {
           u.id === userId ? { ...u, password: newPass } : u
       ));
   };
+
+  // --- INVENTORY CONTROL HANDLERS ---
+  const handleStartInventoryCount = () => {
+      const countList = products.map(p => ({
+          productId: p.id,
+          productName: p.name,
+          systemStock: p.stock,
+          physicalCount: null,
+          difference: 0
+      }));
+      setInventoryCount(countList);
+  };
+  
+  const handleUpdateInventoryCount = (productId: string, count: number | null) => {
+      setInventoryCount(prev => prev.map(item => {
+          if (item.productId === productId) {
+              const physical = count;
+              const diff = physical !== null ? physical - item.systemStock : 0;
+              return { ...item, physicalCount: physical, difference: diff };
+          }
+          return item;
+      }));
+  };
+
+  const handleFinalizeInventoryCount = (adjustStock: boolean) => {
+      if (adjustStock) {
+          const newProducts = [...products];
+          let adjustments = 0;
+          inventoryCount.forEach(item => {
+              if (item.physicalCount !== null && item.difference !== 0) {
+                  const productIndex = newProducts.findIndex(p => p.id === item.productId);
+                  if (productIndex !== -1) {
+                      newProducts[productIndex].stock = item.physicalCount;
+                      adjustments++;
+                  }
+              }
+          });
+          setProducts(newProducts);
+          alert(`Inventario finalizado. Se ajustó el stock de ${adjustments} productos.`);
+      } else {
+          alert("Toma de inventario guardada en el reporte sin ajustar stock.");
+      }
+      setCurrentView(ViewState.INVENTORY_REPORT);
+  };
+  
+  const handleUniversalTransfer = (fromId: string, toId: string, amount: number, exchangeRate: number, reference: string) => {
+    const movements: CashMovement[] = [];
+    const time = new Date().toLocaleTimeString();
+    const user = session?.user.username || 'ADMIN';
+
+    // Origen
+    if(fromId === 'CASH_BOX') {
+        const toAccount = bankAccounts.find(b => b.id === toId);
+        movements.push({ id: Math.random().toString(), time, type: 'Egreso', paymentMethod: 'Efectivo', concept: `DEPOSITO A CTA ${toAccount?.alias || toAccount?.bankName} - ${reference}`, amount, user, category: 'Transferencia Interna', financialType: 'Variable' });
+    } else {
+        const fromAccount = bankAccounts.find(b => b.id === fromId);
+        if(!fromAccount) return alert('Cuenta origen no existe');
+        
+        let concept = '';
+        if(toId === 'CASH_BOX') {
+            concept = `RETIRO EFECTIVO DE CTA ${fromAccount.alias || fromAccount.bankName} - ${reference}`;
+        } else {
+            const toAccount = bankAccounts.find(b => b.id === toId);
+            concept = `TRANSF. A CTA ${toAccount?.alias || toAccount?.bankName} - ${reference}`;
+        }
+        movements.push({ id: Math.random().toString(), time, type: 'Egreso', paymentMethod: 'Deposito', concept, amount, user, category: 'Transferencia Bancaria', financialType: 'Variable', referenceId: fromId });
+    }
+
+    // Destino
+    if(toId === 'CASH_BOX') {
+        const fromAccount = bankAccounts.find(b => b.id === fromId);
+        movements.push({ id: Math.random().toString(), time, type: 'Ingreso', paymentMethod: 'Efectivo', concept: `RETIRO DESDE CTA ${fromAccount?.alias || fromAccount?.bankName} - ${reference}`, amount, user, category: 'Transferencia Interna', financialType: 'Variable' });
+    } else {
+        const toAccount = bankAccounts.find(b => b.id === toId);
+        const fromAccount = bankAccounts.find(b => b.id === fromId);
+        if(!toAccount) return alert('Cuenta destino no existe');
+
+        let toAmount = amount;
+        if(fromId !== 'CASH_BOX' && fromAccount?.currency !== toAccount.currency) {
+            toAmount = fromAccount?.currency === 'USD' ? amount * exchangeRate : amount / exchangeRate;
+        }
+
+        let concept = '';
+        if(fromId === 'CASH_BOX') {
+            concept = `DEPOSITO DESDE CAJA - ${reference}`;
+        } else {
+            concept = `TRANSF. DESDE CTA ${fromAccount?.alias || fromAccount?.bankName} - ${reference}`;
+        }
+        movements.push({ id: Math.random().toString(), time, type: 'Ingreso', paymentMethod: 'Deposito', concept, amount: toAmount, user, category: 'Transferencia Bancaria', financialType: 'Variable', referenceId: toId });
+    }
+
+    setCashMovements(prev => [...prev, ...movements]);
+    alert('Transferencia realizada con éxito.');
+};
+
 
   // --- Handlers ---
   const handleOpenWhatsApp = (name: string, phone: string, message?: string) => {
@@ -222,7 +334,6 @@ const App: React.FC = () => {
         if (!window.confirm('Tienes una venta en curso. ¿Deseas reemplazarla? La venta actual se guardará automáticamente.')) {
             return;
         }
-        // Manually save the current cart before overwriting
         const currentQuotation: Quotation = {
             id: Math.random().toString(36).substring(2, 8),
             date: new Date().toLocaleDateString('es-PE'),
@@ -231,19 +342,14 @@ const App: React.FC = () => {
             items: posCart,
             total: posCart.reduce((acc, item) => acc + item.total, 0)
         };
-        // Add current cart to quotations, and remove the one we are about to load
         setQuotations(prev => [currentQuotation, ...prev.filter(q => q.id !== quotation.id)]);
     } else {
-        // Just remove the loaded quotation from the list
         setQuotations(prev => prev.filter(q => q.id !== quotation.id));
     }
 
-    // Load the new cart's data
     setPosCart(quotation.items);
     const clientToLoad = clients.find(c => c.name === quotation.clientName) || clients[0];
     setPosClient(clientToLoad);
-    
-    // Ensure the view is correct (it might be called from QuotationsModule)
     setCurrentView(ViewState.POS);
   };
 
@@ -253,7 +359,7 @@ const App: React.FC = () => {
 
   const handleAddClient = (client: Client) => { setClients([...clients, client]); };
   const handleUpdateClientBalance = (clientId: string, amount: number, reason: string) => { setClients(clients.map(c => c.id === clientId ? { ...c, digitalBalance: c.digitalBalance + amount } : c)); if (amount !== 0) { setCashMovements([...cashMovements, { id: Math.random().toString(), time: new Date().toLocaleTimeString(), type: amount > 0 ? 'Ingreso' : 'Egreso', paymentMethod: 'Efectivo', concept: `Billetera: ${reason}`, amount: Math.abs(amount), user: session?.user.username || 'ADMIN', category: 'Billetera Clientes', financialType: 'Variable' }]); } };
-  const handleProcessSale = (cart: CartItem[], total: number, docType: string, clientName: string, paymentBreakdown: PaymentBreakdown, ticketId: string) => { const newSale: SaleRecord = { id: ticketId, date: new Date().toLocaleDateString('es-PE'), time: new Date().toLocaleTimeString('es-PE'), clientName: clientName, docType: docType, total: total, items: cart, paymentBreakdown: paymentBreakdown, user: session?.user.username || 'ADMIN' }; setSalesHistory([...salesHistory, newSale]); const newProducts = [...products]; const newStockMovements = [...stockMovements]; cart.forEach(item => { const productIndex = newProducts.findIndex(p => p.id === item.id); if (productIndex >= 0) { const prevStock = newProducts[productIndex].stock; newProducts[productIndex] = { ...newProducts[productIndex], stock: prevStock - item.quantity }; newStockMovements.push({ id: Math.random().toString(), date: new Date().toLocaleDateString('es-PE'), time: new Date().toLocaleTimeString('es-PE'), productId: item.id, productName: item.name, type: 'SALIDA', quantity: item.quantity, currentStock: prevStock - item.quantity, reference: `Venta #${ticketId}`, user: session?.user.username || 'ADMIN' }); } }); setProducts(newProducts); setStockMovements(newStockMovements); const incomeEntries: CashMovement[] = []; const createMovement = (method: PaymentMethodType, amount: number) => ({ id: Math.random().toString(), time: new Date().toLocaleTimeString(), type: 'Ingreso' as const, paymentMethod: method, concept: `Venta ${docType} #${ticketId}`, amount: amount, user: session?.user.username || 'ADMIN', referenceId: ticketId, category: 'Venta', financialType: 'Variable' as const }); if (paymentBreakdown.cash > 0) incomeEntries.push(createMovement('Efectivo', paymentBreakdown.cash)); if (paymentBreakdown.yape > 0) incomeEntries.push(createMovement('Yape', paymentBreakdown.yape)); if (paymentBreakdown.card > 0) incomeEntries.push(createMovement('Tarjeta', paymentBreakdown.card)); if (paymentBreakdown.bank > 0) incomeEntries.push(createMovement('Deposito', paymentBreakdown.bank)); setCashMovements([...cashMovements, ...incomeEntries]); if (paymentBreakdown.wallet && paymentBreakdown.wallet > 0) { const client = clients.find(c => c.name === clientName); if (client) { setClients(clients.map(c => c.id === client.id ? { ...c, digitalBalance: c.digitalBalance - (paymentBreakdown.wallet || 0) } : c)); } } setPosCart([]); };
+  const handleProcessSale = (cart: CartItem[], total: number, docType: string, clientName: string, paymentBreakdown: PaymentBreakdown, ticketId: string) => { const newSale: SaleRecord = { id: ticketId, date: new Date().toLocaleDateString('es-PE'), time: new Date().toLocaleTimeString('es-PE'), clientName: clientName, docType: docType, total: total, items: cart, paymentBreakdown: paymentBreakdown, user: session?.user.username || 'ADMIN' }; setSalesHistory([...salesHistory, newSale]); const newProducts = [...products]; const newStockMovements = [...stockMovements]; cart.forEach(item => { const productIndex = newProducts.findIndex(p => p.id === item.id); if (productIndex >= 0) { const prevStock = newProducts[productIndex].stock; newProducts[productIndex] = { ...newProducts[productIndex], stock: prevStock - item.quantity }; newStockMovements.push({ id: Math.random().toString(), date: new Date().toLocaleDateString('es-PE'), time: new Date().toLocaleTimeString('es-PE'), productId: item.id, productName: item.name, type: 'SALIDA', quantity: item.quantity, currentStock: prevStock - item.quantity, reference: `Venta #${ticketId}`, user: session?.user.username || 'ADMIN' }); } }); setProducts(newProducts); setStockMovements(newStockMovements); const incomeEntries: CashMovement[] = []; const createMovement = (method: PaymentMethodType, amount: number) => ({ id: Math.random().toString(), time: new Date().toLocaleTimeString(), type: 'Ingreso' as const, paymentMethod: method, concept: `Venta ${docType} #${ticketId}`, amount: amount, user: session?.user.username || 'ADMIN', referenceId: ticketId, category: 'Venta', financialType: 'Variable' as const }); if (paymentBreakdown.cash > 0) incomeEntries.push(createMovement('Efectivo', paymentBreakdown.cash)); if (paymentBreakdown.yape > 0) incomeEntries.push(createMovement('Yape', paymentBreakdown.yape)); if (paymentBreakdown.card > 0) incomeEntries.push(createMovement('Tarjeta', paymentBreakdown.card)); if (paymentBreakdown.bank > 0) incomeEntries.push(createMovement('Deposito', paymentBreakdown.bank)); setCashMovements([...cashMovements, ...incomeEntries]); if (paymentBreakdown.wallet && paymentBreakdown.wallet > 0) { const client = clients.find(c => c.name === clientName); if (client) { setClients(clients.map(c => c.id === client.id ? { ...c, digitalBalance: c.digitalBalance - (paymentBreakdown.wallet || 0) } : c)); } } };
   const handleProcessPurchase = (cart: CartItem[], total: number, docType: string, supplierName: string, paymentCondition: 'Contado' | 'Credito', creditDays: number) => { const newPurchase: PurchaseRecord = { id: Math.random().toString().slice(2,8), date: new Date().toLocaleDateString('es-PE'), time: new Date().toLocaleTimeString('es-PE'), supplierName, docType, total, items: cart, paymentCondition, user: session?.user.username || 'ADMIN' }; setPurchasesHistory([...purchasesHistory, newPurchase]); const newProds = [...products]; cart.forEach(item => { const idx = newProds.findIndex(p => p.id === item.id); if(idx>=0) newProds[idx].stock += item.quantity; }); setProducts(newProds); if (paymentCondition === 'Contado') { setCashMovements([...cashMovements, { id: Math.random().toString(), time: new Date().toLocaleTimeString(), type: 'Egreso', paymentMethod: 'Efectivo', concept: `Compra ${supplierName}`, amount: total, user: session?.user.username || 'ADMIN', category: 'Compra', financialType: 'Variable', referenceId: newPurchase.id }]); } };
   const handleFinalizeService = (serviceId: string, total: number, finalStatus: 'Entregado' | 'Devolucion', paymentBreakdown: PaymentBreakdown) => { const updatedServices = services.map(s => s.id === serviceId ? { ...s, status: finalStatus, exitDate: new Date().toLocaleDateString('es-PE'), exitTime: new Date().toLocaleTimeString('es-PE') } : s); setServices(updatedServices); const service = services.find(s => s.id === serviceId); if (service && service.usedProducts.length > 0) { const newProducts = [...products]; service.usedProducts.forEach(part => { const idx = newProducts.findIndex(p => p.id === part.productId); if (idx >= 0) newProducts[idx].stock -= part.quantity; }); setProducts(newProducts); } const incomeEntries: CashMovement[] = []; const addEntry = (method: PaymentMethodType, amount: number) => { if (amount > 0) incomeEntries.push({ id: Math.random().toString(), time: new Date().toLocaleTimeString(), type: 'Ingreso', paymentMethod: method, concept: `Servicio ${finalStatus} #${serviceId}`, amount: amount, user: session?.user.username || 'ADMIN', referenceId: serviceId, category: 'Servicio Técnico', financialType: 'Variable' }); }; addEntry('Efectivo', paymentBreakdown.cash); addEntry('Yape', paymentBreakdown.yape); addEntry('Tarjeta', paymentBreakdown.card); addEntry('Deposito', paymentBreakdown.bank); setCashMovements([...cashMovements, ...incomeEntries]); if (paymentBreakdown.wallet && paymentBreakdown.wallet > 0) { const client = clients.find(c => c.name === service?.client); if (client) { setClients(clients.map(c => c.id === client.id ? { ...c, digitalBalance: c.digitalBalance - (paymentBreakdown.wallet || 0) } : c)); } } };
   const handleProcessCreditNote = (originalSaleId: string, itemsToReturn: { itemId: string, quantity: number }[], totalRefund: number, breakdown: PaymentBreakdown) => { const newProducts = [...products]; itemsToReturn.forEach(({ itemId, quantity }) => { const prodIndex = newProducts.findIndex(p => p.id === itemId); if (prodIndex >= 0) newProducts[prodIndex].stock += quantity; }); setProducts(newProducts); const expenses: CashMovement[] = []; const createExpense = (method: PaymentMethodType, amount: number) => ({ id: Math.random().toString(), time: new Date().toLocaleTimeString(), type: 'Egreso' as const, paymentMethod: method, concept: `Devolución Ref: #${originalSaleId}`, amount: amount, user: session?.user.username || 'ADMIN', category: 'Devoluciones', financialType: 'Variable' as const, referenceId: originalSaleId }); if (breakdown.cash > 0) expenses.push(createExpense('Efectivo', breakdown.cash)); if (breakdown.yape > 0) expenses.push(createExpense('Yape', breakdown.yape)); if (breakdown.card > 0) expenses.push(createExpense('Tarjeta', breakdown.card)); if (breakdown.bank > 0) expenses.push(createExpense('Deposito', breakdown.bank)); setCashMovements([...cashMovements, ...expenses]); if (breakdown.wallet && breakdown.wallet > 0) { const originalSale = salesHistory.find(s => s.id === originalSaleId); if (originalSale) { const client = clients.find(c => c.name === originalSale.clientName); if (client) { setClients(clients.map(c => c.id === client.id ? { ...c, digitalBalance: c.digitalBalance + (breakdown.wallet || 0) } : c)); } } } alert("Nota de crédito procesada exitosamente."); };
@@ -296,51 +402,80 @@ const App: React.FC = () => {
       }
   };
 
+  const handleAddFixedCategory = (category: string, type: 'Ingreso' | 'Egreso') => {
+    if (type === 'Ingreso') {
+        if (!fixedIncomeCategories.includes(category)) {
+            setFixedIncomeCategories(prev => [...prev, category]);
+        }
+    } else {
+        if (!fixedExpenseCategories.includes(category)) {
+            setFixedExpenseCategories(prev => [...prev, category]);
+        }
+    }
+  };
+
+
   if (!session) {
       return (
-          <>
-            {isDarkMode && <div className="fixed inset-0 bg-slate-950 -z-50"/>}
-            <LoginScreen 
-                onLogin={handleLogin} 
-                users={systemUsers} 
-                tenants={tenants} 
-                onResetPassword={handlePasswordReset} 
-            />
-          </>
+          <LoginScreen 
+              onLogin={handleLogin} 
+              users={systemUsers} 
+              tenants={tenants} 
+              onResetPassword={handlePasswordReset} 
+          />
       );
   }
 
   return (
-    <Layout currentView={currentView} onNavigate={setCurrentView} isDarkMode={isDarkMode} toggleTheme={toggleTheme} session={session} onLogout={handleLogout}>
+    <Layout 
+        currentView={currentView} 
+        onNavigate={setCurrentView} 
+        isDarkMode={isDarkMode} 
+        toggleTheme={toggleTheme} 
+        session={session} 
+        onLogout={handleLogout}
+        isSyncEnabled={isSyncEnabled}
+        toggleSyncMode={toggleSyncMode}
+    >
         {currentView === ViewState.SUPER_ADMIN_DASHBOARD && (
             <SuperAdminModule tenants={tenants} onAddTenant={handleCreateTenant} onUpdateTenant={handleUpdateTenant} />
         )}
 
         {currentView !== ViewState.SUPER_ADMIN_DASHBOARD && (
             <>
-                {currentView === ViewState.DASHBOARD && <Dashboard onNavigate={setCurrentView} session={session} cashMovements={cashMovements}/>}
+                {currentView === ViewState.DASHBOARD && <Dashboard onNavigate={setCurrentView} session={session} cashMovements={cashMovements} clients={clients}/>}
                 {currentView === ViewState.POS && <SalesModule products={products} clients={clients} categories={categories} purchasesHistory={purchasesHistory} bankAccounts={bankAccounts} locations={locations} onAddClient={handleAddClient} onProcessSale={handleProcessSale} cart={posCart} setCart={setPosCart} client={posClient} setClient={setPosClient} quotations={quotations} onLoadQuotation={handleLoadQuotation} />}
-                {currentView === ViewState.INVENTORY && <InventoryModule products={products} brands={brands} categories={categories} onUpdateProduct={(p) => setProducts(products.map(pr => pr.id === p.id ? p : pr))} onAddProduct={(p) => setProducts([...products, p])} onDeleteProduct={(id) => setProducts(products.filter(p => p.id !== id))}/>}
+                {currentView === ViewState.INVENTORY && <InventoryModule products={products} brands={brands} categories={categories} onUpdateProduct={(p) => setProducts(products.map(pr => pr.id === p.id ? p : pr))} onAddProduct={(p) => setProducts([...products, p])} onDeleteProduct={(id) => setProducts(products.filter(p => p.id !== id))} onNavigate={setCurrentView}/>}
+                {currentView === ViewState.INVENTORY_CONTROL && <InventoryControlModule onStart={handleStartInventoryCount} inventoryCount={inventoryCount} onUpdateCount={handleUpdateInventoryCount} onFinalize={handleFinalizeInventoryCount} />}
+                {currentView === ViewState.INVENTORY_REPORT && <InventoryReportModule inventoryCountData={inventoryCount} onNavigate={setCurrentView} />}
+                {currentView === ViewState.SALES_REPORT && <SalesReportModule salesHistory={salesHistory} />}
+                {currentView === ViewState.PROFIT_REPORT && <ProfitReportModule salesHistory={salesHistory} cashMovements={cashMovements} products={products} />}
                 {currentView === ViewState.SERVICES && <ServicesModule services={services} products={products} categories={categories} bankAccounts={bankAccounts} clients={clients} onAddService={(s) => setServices([...services, s])} onFinalizeService={handleFinalizeService} onMarkRepaired={(id) => setServices(services.map(s => s.id === id ? { ...s, status: 'Reparado' } : s))} onOpenWhatsApp={handleOpenWhatsApp} />}
                 {currentView === ViewState.PURCHASES && <PurchaseModule products={products} suppliers={suppliers} categories={categories} onAddSupplier={(s) => setSuppliers([...suppliers, s])} onProcessPurchase={handleProcessPurchase}/>}
-                {currentView === ViewState.CASH && <CashModule movements={cashMovements} onAddMovement={(m) => setCashMovements([...cashMovements, m])} />}
+                {currentView === ViewState.CASH && <CashModule movements={cashMovements} onAddMovement={(m) => setCashMovements([...cashMovements, m])} bankAccounts={bankAccounts} onUniversalTransfer={handleUniversalTransfer} fixedExpenseCategories={fixedExpenseCategories} fixedIncomeCategories={fixedIncomeCategories} onAddFixedCategory={handleAddFixedCategory} />}
                 {currentView === ViewState.CLIENTS && <ClientsModule clients={clients} onAddClient={handleAddClient} onOpenWhatsApp={handleOpenWhatsApp}/>}
                 {currentView === ViewState.QUOTATIONS && <QuotationModule quotations={quotations} onLoadQuotation={handleLoadQuotation} onDeleteQuotation={handleDeleteQuotation}/>}
                 {currentView === ViewState.BUSINESS_EVOLUTION && <BusinessEvolutionModule products={products} clients={clients} movements={cashMovements}/>}
                 {currentView === ViewState.MANAGE_RESOURCES && <ResourceManagement brands={brands} onAddBrand={(b) => setBrands([...brands, b])} onDeleteBrand={(id) => setBrands(brands.filter(b => b.id !== id))} categories={categories} onAddCategory={(c) => setCategories([...categories, c])} onDeleteCategory={(id) => setCategories(categories.filter(c => c.id !== id))} />}
                 {currentView === ViewState.SUPPLIERS && <SuppliersModule suppliers={suppliers} onAddSupplier={(s) => setSuppliers([...suppliers, s])} onDeleteSupplier={(id) => setSuppliers(suppliers.filter(s => s.id !== id))}/>}
-                {currentView === ViewState.BANK_ACCOUNTS && <BankAccountsModule bankAccounts={bankAccounts} onAddBankAccount={(b) => setBankAccounts([...bankAccounts, b])} onDeleteBankAccount={(id) => setBankAccounts(bankAccounts.filter(b => b.id !== id))}/>}
-                {currentView === ViewState.HISTORY_QUERIES && <HistoryQueries salesHistory={salesHistory} purchasesHistory={purchasesHistory} stockMovements={stockMovements}/>}
+                {currentView === ViewState.BANK_ACCOUNTS && <BankAccountsModule bankAccounts={bankAccounts} onAddBankAccount={(b) => setBankAccounts([...bankAccounts, b])} onDeleteBankAccount={(id) => setBankAccounts(bankAccounts.filter(b => b.id !== id))} onUniversalTransfer={handleUniversalTransfer} />}
+                {currentView === ViewState.HISTORY_QUERIES && <HistoryQueries initialTab="ventas" salesHistory={salesHistory} purchasesHistory={purchasesHistory} stockMovements={stockMovements}/>}
+                {currentView === ViewState.PURCHASES_HISTORY && <HistoryQueries initialTab="compras" salesHistory={salesHistory} purchasesHistory={purchasesHistory} stockMovements={stockMovements}/>}
+                {currentView === ViewState.KARDEX_HISTORY && <HistoryQueries initialTab="kardex" salesHistory={salesHistory} purchasesHistory={purchasesHistory} stockMovements={stockMovements}/>}
                 {currentView === ViewState.FINANCIAL_STRATEGY && <FinancialStrategyModule products={products} salesHistory={salesHistory} cashMovements={cashMovements} onAddCashMovement={(m) => setCashMovements([...cashMovements, m])} />}
-                {currentView === ViewState.FIXED_EXPENSES && <FinanceManagerModule activeTab="EXPENSES" cashMovements={cashMovements} onAddCashMovement={(m) => setCashMovements([...cashMovements, m])} />}
-                {currentView === ViewState.FIXED_INCOME && <FinanceManagerModule activeTab="INCOME" cashMovements={cashMovements} onAddCashMovement={(m) => setCashMovements([...cashMovements, m])} />}
+                {currentView === ViewState.FIXED_EXPENSES && <FinanceManagerModule activeTab="EXPENSES" cashMovements={cashMovements} onAddCashMovement={(m) => setCashMovements([...cashMovements, m])} fixedCategories={fixedExpenseCategories} onAddFixedCategory={(cat) => handleAddFixedCategory(cat, 'Egreso')} />}
+                {currentView === ViewState.FIXED_INCOME && <FinanceManagerModule activeTab="INCOME" cashMovements={cashMovements} onAddCashMovement={(m) => setCashMovements([...cashMovements, m])} fixedCategories={fixedIncomeCategories} onAddFixedCategory={(cat) => handleAddFixedCategory(cat, 'Ingreso')} />}
                 {currentView === ViewState.CONFIG_PRINTER && <PrintConfigModule />}
                 {currentView === ViewState.USER_PRIVILEGES && <UserPrivilegesModule users={systemUsers.filter(u => u.companyName === session.businessName)} onAddUser={handleAddUser} onUpdateUser={handleUpdateUser} onDeleteUser={handleDeleteUser} />}
                 {currentView === ViewState.CREDIT_NOTE && <CreditNoteModule salesHistory={salesHistory} onProcessCreditNote={handleProcessCreditNote} />}
                 {currentView === ViewState.CLIENT_WALLET && <ClientWalletModule clients={clients} locations={locations} onUpdateClientBalance={handleUpdateClientBalance} onAddClient={handleAddClient}/>}
                 {currentView === ViewState.LOCATIONS && <LocationsModule locations={locations} onAddLocation={(l) => setLocations([...locations, l])} onDeleteLocation={(id) => setLocations(locations.filter(l => l.id !== id))} />}
                 {currentView === ViewState.WHATSAPP && <WhatsAppModule products={products} clients={clients} chats={chats} setChats={setChats} initialContact={waInitialContact}/>}
-                {currentView === ViewState.DATABASE_CONFIG && <DatabaseModule data={{products, clients, movements: cashMovements, sales: salesHistory, services, suppliers, brands, categories, bankAccounts}} onSyncDownload={handleSyncDownload}/>}
+                {currentView === ViewState.DATABASE_CONFIG && <DatabaseModule 
+                    isSyncEnabled={isSyncEnabled}
+                    data={{products, clients, movements: cashMovements, sales: salesHistory, services, suppliers, brands, categories, bankAccounts}} 
+                    onSyncDownload={handleSyncDownload}
+                />}
             </>
         )}
     </Layout>

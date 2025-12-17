@@ -13,6 +13,8 @@ export enum ViewState {
   BANK_ACCOUNTS = 'BANK_ACCOUNTS', 
   MANAGE_RESOURCES = 'MANAGE_RESOURCES', 
   HISTORY_QUERIES = 'HISTORY_QUERIES', 
+  PURCHASES_HISTORY = 'PURCHASES_HISTORY',
+  KARDEX_HISTORY = 'KARDEX_HISTORY',
   FINANCIAL_STRATEGY = 'FINANCIAL_STRATEGY',
   FIXED_EXPENSES = 'FIXED_EXPENSES',
   FIXED_INCOME = 'FIXED_INCOME',
@@ -24,7 +26,11 @@ export enum ViewState {
   WHATSAPP = 'WHATSAPP', 
   QUOTATIONS = 'QUOTATIONS',
   DATABASE_CONFIG = 'DATABASE_CONFIG', // New View
-  SUPER_ADMIN_DASHBOARD = 'SUPER_ADMIN_DASHBOARD'
+  SUPER_ADMIN_DASHBOARD = 'SUPER_ADMIN_DASHBOARD',
+  INVENTORY_CONTROL = 'INVENTORY_CONTROL',
+  INVENTORY_REPORT = 'INVENTORY_REPORT',
+  SALES_REPORT = 'SALES_REPORT',
+  PROFIT_REPORT = 'PROFIT_REPORT'
 }
 
 // --- AUTH TYPES ---
@@ -70,6 +76,7 @@ export interface Product {
   name: string;
   category: string;
   price: number;
+  cost?: number;
   stock: number;
   location?: string;
   brand?: string;
@@ -237,6 +244,16 @@ export interface Quotation {
     items: CartItem[];
     total: number;
 }
+
+// --- INVENTORY CONTROL ---
+export interface InventoryCountItem {
+    productId: string;
+    productName: string;
+    systemStock: number;
+    physicalCount: number | null;
+    difference: number;
+}
+
 
 // --- WHATSAPP & CHAT TYPES ---
 export interface Message {

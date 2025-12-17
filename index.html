@@ -11,6 +11,7 @@
     <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
     <link href="https://fonts.googleapis.com/css2?family=Spline+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
 
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -43,10 +44,18 @@
       html, body, #root { height: 100%; font-family: 'Spline Sans', sans-serif; }
       .glass-panel { background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.5); }
       .dark .glass-panel { background: rgba(20, 20, 20, 0.7); border: 1px solid rgba(255, 255, 255, 0.1); }
+      .glass-card { background: rgba(255, 255, 255, 0.5); backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.3); }
+      .dark .glass-card { background: rgba(30, 30, 30, 0.4); border: 1px solid rgba(255, 255, 255, 0.1); }
+      .ambient-glow { position: absolute; width: 500px; height: 500px; border-radius: 50%; pointer-events: none; z-index: 0; }
+      @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
+      .animate-float { animation: float 6s ease-in-out infinite; }
+      .perspective-1000 { perspective: 1000px; }
       /* Scrollbar */
       ::-webkit-scrollbar { width: 8px; height: 8px; }
       ::-webkit-scrollbar-thumb { background: #d8b4fe; border-radius: 4px; }
       .dark ::-webkit-scrollbar-thumb { background: #334155; }
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       /* Tables */
       .modern-table { width: 100%; border-collapse: separate; border-spacing: 0; }
       .modern-table th { padding: 14px 16px; text-align: left; position: sticky; top: 0; z-index: 10; background-color: #f8fafc; border-bottom: 2px solid #cbd5e1; color: #475569; }
@@ -68,6 +77,6 @@
 </head>
   <body class="bg-background-light dark:bg-background-dark text-text-dark dark:text-gray-100 font-display transition-colors duration-300 overflow-x-hidden">
     <div id="root"></div>
-    <script type="module" src="/main.tsx"></script>
+    <script type="module" src="/index.tsx"></script>
   </body>
 </html>

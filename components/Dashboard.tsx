@@ -3,15 +3,15 @@ import React, { useMemo } from 'react';
 import { 
   ShoppingCart, TrendingUp, Users, Target, Calendar, 
   ArrowRight, CreditCard, Award, Megaphone, ArrowUpRight,
-  MoreHorizontal, ChevronRight, Wallet, Activity
+  MoreHorizontal, ChevronRight, Wallet, Activity, UserPlus
 } from 'lucide-react';
-import { ViewState, AuthSession, CashMovement } from '../types';
-import { MOCK_CLIENTS } from '../constants';
+import { ViewState, AuthSession, CashMovement, Client } from '../types';
 
 interface DashboardProps {
   onNavigate: (view: ViewState) => void;
   session?: AuthSession | null;
   cashMovements: CashMovement[];
+  clients: Client[];
 }
 
 // 1. Goal Ring Component
@@ -57,26 +57,26 @@ const ClientAcquisitionChart = () => {
     );
 };
 
-const Dashboard: React.FC<DashboardProps> = ({ onNavigate, session, cashMovements }) => {
+const Dashboard: React.FC<DashboardProps> = ({ onNavigate, session, cashMovements, clients }) => {
   const userName = session?.user.fullName || 'Usuario';
   const dailyGoal = 1500.00;
 
   const stats = useMemo(() => {
       const mySalesToday = cashMovements
-          .filter(m => m.type === 'Ingreso' && m.user === userName && m.category === 'Venta')
+          .filter(m => m.type === 'Ingreso' && m.user === userName && (m.category === 'Venta' || m.category === 'Servicio Técnico'))
           .reduce((acc, m) => acc + m.amount, 0);
 
       const storeSalesToday = cashMovements
-          .filter(m => m.type === 'Ingreso' && m.category === 'Venta')
+          .filter(m => m.type === 'Ingreso' && (m.category === 'Venta' || m.category === 'Servicio Técnico'))
           .reduce((acc, m) => acc + m.amount, 0);
 
-      const myReceivables = MOCK_CLIENTS
+      const myReceivables = clients
           .reduce((acc, c) => acc + (c.creditUsed || 0), 0);
 
-      const newClientsCount = MOCK_CLIENTS.filter(c => c.tags?.includes('Nuevo')).length;
+      const newClientsCount = clients.filter(c => c.tags?.includes('Nuevo')).length;
 
       return { mySalesToday, storeSalesToday, myReceivables, newClientsCount };
-  }, [userName, cashMovements]);
+  }, [userName, cashMovements, clients]);
 
   const progressColor = stats.mySalesToday >= dailyGoal ? '#10b981' : '#6366f1';
 
@@ -189,7 +189,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, session, cashMovement
           <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-slate-200 dark:border-slate-800">
               <div className="flex justify-between items-center mb-2">
                   <h3 className="font-bold text-slate-700 dark:text-white flex items-center gap-2">
-                      <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-blue-500"><UserPlusIcon size={18}/></div>
+                      <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-blue-500"><UserPlus size={18}/></div>
                       Nuevos Clientes
                   </h3>
                   <span className="text-2xl font-black text-slate-800 dark:text-white">{stats.newClientsCount}</span>
@@ -294,9 +294,5 @@ const QuickActionBtn = ({ icon: Icon, label, subLabel, color, onClick }: any) =>
         </button>
     );
 };
-
-const UserPlusIcon = ({ size, className }: any) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
-);
 
 export default Dashboard;
